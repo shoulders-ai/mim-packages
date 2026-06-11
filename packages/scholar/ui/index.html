@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>Scholar</title>
+  <style>
+    [hidden] { display: none !important; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      background: color-mix(in srgb, var(--color-chrome-mid) 38%, var(--color-surface));
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+      font-size: 12px;
+    }
+    button, input, textarea {
+      font: inherit;
+    }
+    button {
+      height: 30px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-2);
+      padding: 0 11px;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) {
+      background: var(--color-chrome-mid);
+      border-color: var(--color-rule);
+      color: var(--color-ink);
+    }
+    button:disabled {
+      opacity: 0.48;
+    }
+    input, textarea {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink);
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 16%, transparent);
+    }
+    textarea {
+      min-height: 132px;
+      padding: 13px 14px;
+      line-height: 1.48;
+      resize: vertical;
+    }
+    input {
+      height: 30px;
+      padding: 0 8px;
+    }
+    label {
+      color: var(--color-ink-2);
+      font-weight: 680;
+    }
+    details > summary {
+      list-style: none;
+    }
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+    .app {
+      height: 100%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      min-height: 38px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: color-mix(in srgb, var(--color-surface) 94%, var(--color-chrome-high));
+      flex: 0 0 auto;
+    }
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .mark {
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+    .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+      line-height: 1.2;
+      font-weight: 780;
+      color: var(--color-ink);
+    }
+    .source-summary {
+      max-width: min(34vw, 260px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1;
+      text-align: right;
+    }
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(360px, 0.86fr) minmax(420px, 1.14fr);
+    }
+    .ask, .answer {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+    }
+    .ask {
+      padding: 22px;
+      border-right: 1px solid var(--color-rule-light);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, var(--color-accent) 8%), var(--color-surface) 52%);
+    }
+    .answer {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 12px;
+      padding: 18px;
+    }
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.045);
+    }
+    .question-panel {
+      display: grid;
+      gap: 18px;
+      padding: 20px;
+    }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    h1, h2 {
+      margin: 0;
+      color: var(--color-ink);
+      font-size: 15px;
+      line-height: 1.18;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+    h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .caption {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .field small {
+      color: var(--color-ink-4);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .focus textarea {
+      min-height: 84px;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .primary {
+      min-width: 126px;
+      height: 34px;
+      border-color: var(--color-accent);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-weight: 780;
+    }
+    .primary:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--color-accent) 88%, black);
+      color: var(--color-accent-ink);
+    }
+    .feedback {
+      min-height: 18px;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .advanced {
+      border-top: 1px solid var(--color-rule-light);
+      padding-top: 12px;
+    }
+    .advanced summary {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--color-chrome-mid) 34%, var(--color-surface));
+      color: var(--color-ink);
+      padding: 9px 11px;
+    }
+    .advanced summary:hover {
+      border-color: var(--color-rule);
+      background: color-mix(in srgb, var(--color-chrome-mid) 58%, var(--color-surface));
+    }
+    .advanced summary:focus-visible,
+    .run-row:focus-visible,
+    .file-row:focus-visible,
+    .quiet-button:focus-visible {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 14%, transparent);
+    }
+    .advanced summary::after {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid var(--color-ink-3);
+      border-bottom: 1.5px solid var(--color-ink-3);
+      transform: rotate(45deg) translateY(-1px);
+      transition: transform 0.16s ease;
+    }
+    .advanced[open] summary {
+      border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-rule));
+      background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+    }
+    .advanced[open] summary::after {
+      transform: rotate(-135deg) translate(-1px, -1px);
+    }
+    .advanced-copy {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+    .advanced-title {
+      overflow: hidden;
+      color: var(--color-ink);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .advanced-subtitle {
+      overflow: hidden;
+      color: var(--color-ink-4);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .advanced-pill {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 999px;
+      background: var(--color-surface);
+      color: var(--color-ink-3);
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .advanced[open] .advanced-pill {
+      border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-rule-light));
+      color: var(--color-accent);
+    }
+    .advanced-body {
+      display: grid;
+      gap: 14px;
+      padding-top: 10px;
+    }
+    .preset-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .preset {
+      min-width: 0;
+      min-height: 44px;
+      display: grid;
+      gap: 3px;
+      align-content: center;
+      justify-content: stretch;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-2);
+      padding: 9px 10px;
+    }
+    .preset:hover {
+      background: var(--color-chrome-mid);
+    }
+    .preset input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+    }
+    .preset:has(input:checked) {
+      border-color: color-mix(in srgb, var(--color-accent) 64%, var(--color-rule));
+      background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+      color: var(--color-ink);
+    }
+    .preset strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+    .preset span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+    }
+    .source-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .source-toggle {
+      min-width: 0;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 7px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-2);
+      padding: 0 8px;
+      font-weight: 540;
+    }
+    .source-toggle:hover {
+      background: var(--color-chrome-mid);
+    }
+    .source-toggle input {
+      width: 13px;
+      height: 13px;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+    .toggle-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .check {
+      min-width: 0;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 7px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-2);
+      padding: 0 9px;
+      font-weight: 540;
+    }
+    .check:hover {
+      background: var(--color-chrome-mid);
+    }
+    .check input {
+      width: 13px;
+      height: 13px;
+      padding: 0;
+    }
+    .key-list {
+      display: grid;
+      gap: 7px;
+    }
+    .key-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      padding: 10px;
+    }
+    .key-head {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .key-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink-2);
+      font-weight: 650;
+    }
+    .key-row input {
+      height: 32px;
+    }
+    .key-actions {
+      display: flex;
+      justify-content: end;
+    }
+    .key-actions button {
+      height: 28px;
+    }
+    .status-word {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .status-word.live { color: var(--color-add); }
+    .status-word.missing { color: var(--color-rem); }
+    .result-panel {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+    .result-empty {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+    .brief-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-rule-light));
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+      padding: 14px;
+    }
+    .brief-main {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+    .brief-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink);
+      font-size: 14px;
+      font-weight: 760;
+    }
+    .brief-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .evidence {
+      border-top: 1px solid var(--color-rule-light);
+      padding-top: 10px;
+    }
+    .evidence summary {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--color-ink-2);
+      font-weight: 680;
+    }
+    .evidence summary span:last-child {
+      color: var(--color-ink-4);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .file-list {
+      display: grid;
+      gap: 6px;
+    }
+    .file-list {
+      padding-top: 8px;
+    }
+    .file-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      padding: 8px 9px;
+      text-align: left;
+    }
+    .run-row:hover, .file-row:hover {
+      background: var(--color-chrome-mid);
+    }
+    .run-list {
+      display: grid;
+      gap: 8px;
+    }
+    .run-row {
+      position: relative;
+      min-width: 0;
+      min-height: 64px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 96%, var(--color-chrome-mid)), var(--color-surface));
+      padding: 11px 12px 11px 14px;
+      text-align: left;
+    }
+    .run-row::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-accent) 78%, var(--color-add));
+      opacity: 0.72;
+    }
+    .run-row:hover {
+      border-color: color-mix(in srgb, var(--color-accent) 26%, var(--color-rule));
+      background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+    }
+    .run-main {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+    .run-title {
+      min-width: 0;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      color: var(--color-ink);
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.32;
+      white-space: normal;
+    }
+    .run-meta {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      overflow: hidden;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .run-meta span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .run-side {
+      display: grid;
+      justify-items: end;
+      gap: 6px;
+    }
+    .run-count {
+      height: 23px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-rule-light));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+      color: var(--color-ink);
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .run-status {
+      height: 19px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--color-ink-3);
+      font-size: 10px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .run-status i {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--color-ink-4);
+    }
+    .run-status.running i { background: var(--color-accent); }
+    .run-status.done i { background: var(--color-add); }
+    .run-status.fail i { background: var(--color-rem); }
+    .row-main {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+    .row-title {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink);
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .row-meta {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .state {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: var(--color-chrome-mid);
+      color: var(--color-ink-3);
+      padding: 0 8px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .state i {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--color-ink-4);
+    }
+    .state.running i { background: var(--color-accent); }
+    .state.done i { background: var(--color-add); }
+    .state.fail i { background: var(--color-rem); }
+    .history-panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .history-head {
+      align-items: center;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+    .quiet-button {
+      height: 26px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--color-ink-3);
+      padding: 0 8px;
+      font-size: 11px;
+    }
+    .quiet-button:hover:not(:disabled) {
+      border-color: var(--color-rule-light);
+      background: var(--color-chrome-mid);
+      color: var(--color-ink);
+    }
+    .history-scroll {
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 12px 12px;
+    }
+    .history-empty {
+      display: grid;
+      gap: 3px;
+      border: 1px dashed var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .history-empty strong {
+      color: var(--color-ink-2);
+      font-size: 11px;
+    }
+    .history-empty span {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .empty {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 4px 0;
+    }
+    @media (max-width: 880px) {
+      .topbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        padding: 0 12px;
+      }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .ask {
+        border-right: 0;
+        border-bottom: 1px solid var(--color-rule-light);
+      }
+      .answer {
+        grid-template-rows: auto auto;
+      }
+      .run-row {
+        grid-template-columns: 1fr;
+        gap: 9px;
+      }
+      .run-side {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        justify-items: stretch;
+      }
+      .preset-row, .source-grid {
+        grid-template-columns: 1fr;
+      }
+      .key-row, .settings-grid, .brief-card {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 560px) {
+      .source-summary {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">S</div>
+        <div class="title">Scholar</div>
+      </div>
+      <div id="sourceSummary" class="source-summary"></div>
+    </header>
+
+    <main class="layout">
+      <section class="ask">
+        <div class="panel question-panel">
+          <div class="section-head">
+            <h1>Find Literature</h1>
+            <div id="runState" class="caption">Ready</div>
+          </div>
+
+          <div class="field">
+            <label for="question">
+              <span>What are you trying to understand?</span>
+              <small>required</small>
+            </label>
+            <textarea id="question" placeholder="Example: Does exercise therapy improve pain after shoulder surgery?"></textarea>
+          </div>
+
+          <div class="field focus">
+            <label for="criteria">
+              <span>Focus or exclusions</span>
+              <small>optional</small>
+            </label>
+            <textarea id="criteria" placeholder="Adults only, randomized trials, no animal studies, last 10 years"></textarea>
+          </div>
+
+          <div class="actions">
+            <button id="run" class="primary">Find Evidence</button>
+            <div id="feedback" class="feedback"></div>
+          </div>
+
+          <details class="advanced">
+            <summary>
+              <span class="advanced-copy">
+                <span class="advanced-title">Search settings</span>
+                <span class="advanced-subtitle">Sources, keys, depth</span>
+              </span>
+              <span class="advanced-pill">Optional</span>
+            </summary>
+            <div class="advanced-body">
+              <div class="field">
+                <label>Coverage</label>
+                <div class="preset-row" id="sourcePresets">
+                  <label class="preset">
+                    <input type="radio" name="sourcePreset" value="balanced" checked>
+                    <strong>Best available</strong>
+                    <span>Articles and trials</span>
+                  </label>
+                  <label class="preset">
+                    <input type="radio" name="sourcePreset" value="biomedical">
+                    <strong>Biomedical</strong>
+                    <span>PubMed, PMC, trials</span>
+                  </label>
+                  <label class="preset">
+                    <input type="radio" name="sourcePreset" value="wide">
+                    <strong>Wide net</strong>
+                    <span>All live sources</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Source details</label>
+                <div class="source-grid" id="sources">
+                  <label class="source-toggle"><input type="checkbox" value="pubmed" checked>PubMed</label>
+                  <label class="source-toggle"><input type="checkbox" value="europepmc" checked>Europe PMC</label>
+                  <label class="source-toggle"><input type="checkbox" value="clinicaltrials" checked>ClinicalTrials.gov</label>
+                  <label class="source-toggle"><input type="checkbox" value="arxiv" checked>arXiv</label>
+                  <label class="source-toggle"><input type="checkbox" value="openalex">OpenAlex</label>
+                  <label class="source-toggle"><input type="checkbox" value="semanticscholar">Semantic Scholar</label>
+                </div>
+              </div>
+
+              <div class="settings-grid">
+                <div class="field">
+                  <label>Assist</label>
+                  <div class="toggle-row">
+                    <label class="check"><input id="aiPlan" type="checkbox" checked>Improve terms</label>
+                    <label class="check"><input id="aiScreen" type="checkbox" checked>Rank results</label>
+                    <label class="check"><input id="aiAnswer" type="checkbox" checked>Draft answer</label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Depth</label>
+                  <div class="toggle-row" id="depthControls">
+                    <label class="check"><input type="radio" name="depth" value="quick" checked>Quick</label>
+                    <label class="check"><input type="radio" name="depth" value="standard">Standard</label>
+                    <label class="check"><input type="radio" name="depth" value="deep">Deep</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Keys</label>
+                <div class="key-list">
+                  <div class="key-row" data-secret="openalex_api_key">
+                    <div class="key-head">
+                      <div class="key-name">OpenAlex</div>
+                      <span class="status-word missing">Missing</span>
+                    </div>
+                    <input type="password" placeholder="openalex_api_key">
+                    <div class="key-actions"><button data-action="save">Save</button></div>
+                  </div>
+                  <div class="key-row" data-secret="ncbi_api_key">
+                    <div class="key-head">
+                      <div class="key-name">NCBI</div>
+                      <span class="status-word missing">Missing</span>
+                    </div>
+                    <input type="password" placeholder="ncbi_api_key">
+                    <div class="key-actions"><button data-action="save">Save</button></div>
+                  </div>
+                  <div class="key-row" data-secret="semantic_scholar_api_key">
+                    <div class="key-head">
+                      <div class="key-name">Semantic Scholar</div>
+                      <span class="status-word missing">Missing</span>
+                    </div>
+                    <input type="password" placeholder="semantic_scholar_api_key">
+                    <div class="key-actions"><button data-action="save">Save</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="answer">
+        <div class="panel result-panel">
+          <div class="section-head">
+            <h2>Brief</h2>
+            <div id="flow" class="caption"></div>
+          </div>
+          <div id="resultBody" class="result-empty">The brief will appear here after a search finishes.</div>
+        </div>
+
+        <div class="panel history-panel">
+          <div class="section-head history-head">
+            <h2>Recent searches</h2>
+            <button id="reloadRuns" class="quiet-button">Refresh</button>
+          </div>
+          <div class="history-scroll">
+            <div id="runs" class="run-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { runtime } from '/sdk/mim.js'
+
+    const el = {
+      sourceSummary: document.querySelector('#sourceSummary'),
+      runState: document.querySelector('#runState'),
+      question: document.querySelector('#question'),
+      criteria: document.querySelector('#criteria'),
+      aiPlan: document.querySelector('#aiPlan'),
+      aiScreen: document.querySelector('#aiScreen'),
+      aiAnswer: document.querySelector('#aiAnswer'),
+      depthControls: document.querySelector('#depthControls'),
+      sources: document.querySelector('#sources'),
+      presets: document.querySelector('#sourcePresets'),
+      run: document.querySelector('#run'),
+      feedback: document.querySelector('#feedback'),
+      reloadRuns: document.querySelector('#reloadRuns'),
+      runs: document.querySelector('#runs'),
+      resultBody: document.querySelector('#resultBody'),
+      flow: document.querySelector('#flow'),
+    }
+
+    const sourcePresets = {
+      balanced: ['pubmed', 'europepmc', 'clinicaltrials', 'openalex'],
+      biomedical: ['pubmed', 'europepmc', 'clinicaltrials'],
+      wide: ['pubmed', 'europepmc', 'clinicaltrials', 'arxiv', 'openalex', 'semanticscholar'],
+    }
+
+    let unsubscribe = null
+    let activeRunId = null
+    let secretState = new Map()
+
+    await runtime.ready
+    await refreshSecrets()
+    await loadRuns()
+
+    el.run.addEventListener('click', () => startSearch().catch(showError))
+    el.reloadRuns.addEventListener('click', () => loadRuns().catch(showError))
+
+    el.presets.querySelectorAll('input[name="sourcePreset"]').forEach(input => {
+      input.addEventListener('change', () => applySourcePreset())
+    })
+    el.sources.querySelectorAll('input[type="checkbox"]').forEach(input => {
+      input.addEventListener('change', () => {
+        el.presets.querySelectorAll('input[name="sourcePreset"]').forEach(preset => { preset.checked = false })
+      })
+    })
+
+    document.querySelectorAll('[data-secret] button[data-action="save"]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const row = button.closest('[data-secret]')
+        const name = row.dataset.secret
+        const value = row.querySelector('input').value.trim()
+        if (!value) return
+        await runtime.secrets.set(name, value)
+        row.querySelector('input').value = ''
+        await refreshSecrets()
+      })
+    })
+
+    async function startSearch() {
+      const question = el.question.value.trim()
+      if (!question) throw new Error('Question is required.')
+      const inputs = {
+        question,
+        criteria: el.criteria.value.trim(),
+        sources: selectedSources(),
+        depth: selectedDepth(),
+        use_ai_plan: el.aiPlan.checked,
+        use_ai_screening: el.aiScreen.checked,
+        use_ai_answer: el.aiAnswer.checked,
+      }
+      el.resultBody.className = 'result-empty'
+      el.resultBody.textContent = 'Search is running in the run view. The brief will appear here when it finishes.'
+      setBusy(true, 'Running')
+      const run = await runtime.jobs.start('runSearch', inputs)
+      activeRunId = run.runId
+      el.feedback.textContent = `Started ${run.runId}`
+      unsubscribe?.()
+      unsubscribe = runtime.jobs.on(activeRunId, handleJobEvent)
+      await loadRuns()
+    }
+
+    async function handleJobEvent(event) {
+      const label = event.data?.name || event.data?.label || event.data?.summary
+      if ((event.type === 'job.step' || event.type === 'job.progress') && label) {
+        setBusy(true, String(label))
+      }
+      if (event.type === 'job.done' || event.type === 'job.failed' || event.type === 'job.cancelled') {
+        await refreshActiveRun(event)
+      }
+    }
+
+    async function refreshActiveRun(event) {
+      setBusy(false, event.type.replace('job.', ''))
+      await loadRuns()
+      if (!activeRunId) return
+      const latest = await runtime.jobs.get(activeRunId)
+      const run = latest?.run || latest
+      if (run?.status === 'completed') renderResult(run.result)
+      if (run?.status === 'failed') showError(new Error(run.error || event.data?.error || 'Search failed'))
+    }
+
+    async function loadRuns() {
+      const result = await runtime.jobs.list()
+      const runs = (result?.runs || result || [])
+        .filter(run => run.jobId === 'runSearch')
+        .slice(0, 10)
+      if (!runs.length) {
+        el.runs.innerHTML = '<div class="history-empty"><strong>No searches yet</strong><span>Finished briefs will appear here.</span></div>'
+        return
+      }
+      el.runs.innerHTML = runs.map(run => {
+        const result = run.result || {}
+        const status = run.status || 'queued'
+        const flow = result.flow || {}
+        const title = runTitle(run, result)
+        const count = flow.deduped ? `${flow.included || 0}/${flow.deduped}` : ''
+        const meta = runMeta(run, result, flow)
+        const when = runDate(run, result)
+        return `
+          <button class="run-row" data-run="${escapeHtml(run.runId)}">
+            <span class="run-main">
+              <span class="run-title">${escapeHtml(title)}</span>
+              <span class="run-meta">
+                <span>${escapeHtml(meta)}</span>
+                ${when ? `<span>${escapeHtml(when)}</span>` : ''}
+              </span>
+            </span>
+            <span class="run-side">
+              ${count ? `<span class="run-count">${escapeHtml(count)}</span>` : ''}
+              <span class="run-status ${statusKind(status)}"><i></i>${escapeHtml(statusLabel(status))}</span>
+            </span>
+          </button>
+        `
+      }).join('')
+      el.runs.querySelectorAll('[data-run]').forEach(button => {
+        button.addEventListener('click', async () => {
+          const latest = await runtime.jobs.get(button.dataset.run)
+          const run = latest?.run || latest
+          activeRunId = button.dataset.run
+          if (run?.result) renderResult(run.result)
+        })
+      })
+    }
+
+    function renderResult(result = {}) {
+      const outputs = result.outputs || []
+      const primary = result.primaryOutput || outputs.find(output => output.kind === 'markdown') || outputs[0]
+      const evidence = result.evidenceOutputs || outputs.filter(output => output !== primary)
+      const flow = result.flow || {}
+      el.flow.textContent = flow.deduped ? `${flow.included || 0}/${flow.deduped} kept` : ''
+      if (!primary) {
+        el.resultBody.className = 'result-empty'
+        el.resultBody.textContent = 'No brief was recorded for this run.'
+        return
+      }
+      el.resultBody.className = ''
+      el.resultBody.innerHTML = `
+        <div class="brief-card">
+          <div class="brief-main">
+            <div class="brief-title">${escapeHtml(primary.label || 'Brief')}</div>
+            <div class="brief-meta">${escapeHtml(result.folder || primary.path || '')} ${flow.identified ? `- ${flow.identified} found` : ''}</div>
+          </div>
+          <button class="primary" data-path="${escapeHtml(primary.path)}">${escapeHtml(primary.action || 'Open brief')}</button>
+        </div>
+        <details class="evidence">
+          <summary><span>Evidence files</span><span>${evidence.length} files</span></summary>
+          <div class="file-list">
+            ${evidence.map(output => `
+              <button class="file-row" data-path="${escapeHtml(output.path)}">
+                <span class="row-main">
+                  <span class="row-title">${escapeHtml(output.label || output.path)}</span>
+                  <span class="row-meta">${escapeHtml(output.path || '')}</span>
+                </span>
+                <span class="state"><i></i>${escapeHtml(output.kind || 'file')}</span>
+              </button>
+            `).join('')}
+          </div>
+        </details>
+      `
+      el.resultBody.querySelectorAll('[data-path]').forEach(button => {
+        button.addEventListener('click', async () => {
+          await runtime.call('editor.open', { path: button.dataset.path })
+        })
+      })
+    }
+
+    async function refreshSecrets() {
+      const statuses = await runtime.secrets.status()
+      secretState = new Map(statuses.map(item => [item.name, item.exists === true]))
+      document.querySelectorAll('[data-secret]').forEach(row => {
+        const exists = secretState.get(row.dataset.secret) === true
+        const word = row.querySelector('.status-word')
+        word.textContent = exists ? 'Set' : 'Missing'
+        word.className = `status-word ${exists ? 'live' : 'missing'}`
+      })
+      renderSourceSummary()
+      applySourcePreset()
+    }
+
+    function renderSourceSummary() {
+      const configured = configuredSources()
+      const notes = []
+      if (!secretState.get('ncbi_api_key')) notes.push('PubMed uses the public rate limit until an NCBI key is saved.')
+      if (!secretState.get('openalex_api_key')) notes.push('OpenAlex is optional and available after saving its key.')
+      if (!secretState.get('semantic_scholar_api_key')) notes.push('Semantic Scholar is optional and available after saving its key.')
+      el.sourceSummary.textContent = `${configured.size} sources ready`
+      el.sourceSummary.title = notes.join('\n')
+    }
+
+    function applySourcePreset() {
+      const preset = el.presets.querySelector('input[name="sourcePreset"]:checked')?.value
+      if (!preset) return
+      const allowed = new Set(sourcePresets[preset] || sourcePresets.balanced)
+      const configured = configuredSources()
+      el.sources.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.checked = allowed.has(input.value) && configured.has(input.value)
+      })
+    }
+
+    function configuredSources() {
+      const sources = new Set(['pubmed', 'europepmc', 'clinicaltrials', 'arxiv'])
+      if (secretState.get('openalex_api_key')) sources.add('openalex')
+      if (secretState.get('semantic_scholar_api_key')) sources.add('semanticscholar')
+      return sources
+    }
+
+    function selectedSources() {
+      const selected = [...el.sources.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value)
+      return selected.length ? selected : [...configuredSources()]
+    }
+
+    function runTitle(run, result) {
+      return String(run.inputs?.question || result.question || result.slug || run.runId || 'Untitled search').trim()
+    }
+
+    function runMeta(run, result, flow) {
+      if (flow.deduped) return `${flow.included || 0} of ${flow.deduped} kept`
+      if (result.folder) return folderLeaf(result.folder)
+      return statusLabel(run.status || 'queued')
+    }
+
+    function runDate(run, result) {
+      const iso = run.startedAt || run.createdAt || result.createdAt
+      if (typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}/.test(iso)) return iso.slice(0, 10)
+      const match = String(result.folder || result.slug || '').match(/\d{4}-\d{2}-\d{2}/)
+      return match?.[0] || ''
+    }
+
+    function folderLeaf(path) {
+      return String(path || '').split('/').filter(Boolean).pop() || ''
+    }
+
+    function setBusy(disabled, label) {
+      el.run.disabled = disabled
+      el.runState.textContent = label || (disabled ? 'Running' : 'Ready')
+    }
+
+    function showError(error) {
+      setBusy(false, 'Failed')
+      el.feedback.textContent = error.message || String(error)
+    }
+
+    function selectedDepth() {
+      return el.depthControls.querySelector('input[name="depth"]:checked')?.value || 'quick'
+    }
+
+    function statusKind(status) {
+      if (status === 'completed') return 'done'
+      if (status === 'failed' || status === 'cancelled') return 'fail'
+      return 'running'
+    }
+
+    function statusLabel(status) {
+      if (status === 'completed') return 'Done'
+      if (status === 'failed') return 'Failed'
+      if (status === 'cancelled') return 'Cancelled'
+      if (status === 'running') return 'Running'
+      return 'Queued'
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+    }
+  </script>
+</body>
+</html>

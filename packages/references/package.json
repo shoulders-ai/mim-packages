@@ -1,0 +1,32 @@
+{
+  "name": "@mim/references",
+  "version": "0.1.0",
+  "type": "module",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "references",
+    "name": "References",
+    "icon": "./ui/icon.svg",
+    "description": "Reference library: capture by DOI, PDF, or paste; cite from a real, verifiable library.",
+    "views": [
+      { "id": "library", "label": "References", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true },
+      "ai": true,
+      "http": ["api.crossref.org", "doi.org", "*.doi.org", "api.openalex.org"]
+    },
+    "provides": {
+      "tools": [
+        { "name": "references.search", "category": "read", "risk": "low" },
+        { "name": "references.get", "category": "read", "risk": "low" },
+        { "name": "references.add", "category": "write", "risk": "medium" },
+        { "name": "references.import", "category": "write", "risk": "medium" },
+        { "name": "references.attach_pdf", "category": "write", "risk": "medium" }
+      ]
+    },
+    "dataFolder": "references",
+    "engines": { "mim": "runtime-v1" }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@mim/board",
+  "version": "0.1.1",
+  "type": "module",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "board",
+    "name": "Board",
+    "icon": "./ui/icon.svg",
+    "description": "Kanban issue board",
+    "views": [
+      { "id": "main", "label": "Board", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true }
+    },
+    "provides": {
+      "tools": [
+        { "name": "issues.list", "category": "read", "risk": "low" },
+        { "name": "issues.get", "category": "read", "risk": "low" },
+        { "name": "issues.create", "category": "write", "risk": "medium" },
+        { "name": "issues.update", "category": "write", "risk": "medium" },
+        { "name": "issues.delete", "category": "write", "risk": "high" }
+      ]
+    },
+    "dataFolder": "issues",
+    "engines": { "mim": "runtime-v1" }
+  }
+}

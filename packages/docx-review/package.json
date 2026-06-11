@@ -1,0 +1,22 @@
+{
+  "name": "@mim/docx-review",
+  "version": "0.2.0",
+  "type": "module",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "docx-review",
+    "name": "DOCX Review",
+    "icon": "./ui/icon.svg",
+    "description": "Runs a structured academic peer-review workflow and writes comments back into a Word revision copy.",
+    "views": [
+      { "id": "main", "label": "DOCX Review", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true },
+      "ai": true,
+      "http": ["api.crossref.org", "api.openalex.org", "clinicaltrials.gov"]
+    },
+    "engines": { "mim": "runtime-v1" }
+  }
+}

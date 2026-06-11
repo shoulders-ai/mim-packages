@@ -1,0 +1,20 @@
+{
+  "name": "@mim/import-md",
+  "version": "0.1.3",
+  "type": "module",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "import-md",
+    "name": "Import to Markdown",
+    "icon": "./ui/icon.svg",
+    "description": "Convert Word, Excel, BibTeX, and selectable PDF files into AI-ready Markdown.",
+    "views": [
+      { "id": "main", "label": "Import", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true }
+    },
+    "engines": { "mim": "runtime-v1" }
+  }
+}

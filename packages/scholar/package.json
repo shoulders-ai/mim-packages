@@ -1,0 +1,40 @@
+{
+  "name": "@mim/scholar",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mim package: reproducible abstract-level literature search across public academic sources.",
+  "license": "MIT",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "scholar",
+    "name": "Scholar",
+    "icon": "./ui/icon.svg",
+    "description": "Reproducible abstract-level literature search with source-grounded candidate sets.",
+    "views": [
+      { "id": "main", "label": "Scholar", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true },
+      "ai": true,
+      "http": [
+        "api.openalex.org",
+        "eutils.ncbi.nlm.nih.gov",
+        "api.semanticscholar.org",
+        "www.ebi.ac.uk",
+        "clinicaltrials.gov",
+        "export.arxiv.org"
+      ],
+      "secrets": ["openalex_api_key", "ncbi_api_key", "semantic_scholar_api_key"]
+    },
+    "provides": {
+      "tools": [
+        { "name": "litsearch.search", "category": "read", "risk": "low" },
+        { "name": "litsearch.lookup", "category": "read", "risk": "low" },
+        { "name": "litsearch.citations", "category": "read", "risk": "medium" }
+      ]
+    },
+    "dataFolder": "searches",
+    "engines": { "mim": "runtime-v1" }
+  }
+}

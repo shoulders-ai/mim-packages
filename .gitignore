@@ -1,0 +1,11 @@
+node_modules/
+
+# Mim workspace artifacts (created when this repo is opened as a dev workspace)
+.mim/
+mim.yaml
+.DS_Store
+
+# Local test/runtime artifacts
+inputs/
+/references/
+searches/

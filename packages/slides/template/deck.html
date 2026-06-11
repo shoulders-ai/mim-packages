@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!--
+  MIM SLIDE DECK TEMPLATE — THE CONTRACT
+
+  Geometry (never change):
+  - One deck = one self-contained HTML file. No external scripts, no remote
+    fonts, no remote images. System fonts, inline SVG, and CSS only. Local
+    workspace images may be referenced by relative path.
+  - Every slide is a top-level <section class="slide"> — 1280x720 CSS px,
+    PowerPoint's default 16:9 page (13.333in x 7.5in at 96dpi).
+  - Slides print one per PDF page. Keep all content inside the slide box;
+    overflow is clipped and flagged by the renderer.
+  - Decorative elements may intentionally cross the slide edge ONLY when
+    marked data-bleed (on the element or an ancestor).
+
+  Design system (restyle freely):
+  - Theme lives in the :root custom properties. Adjust colors, fonts, and the
+    type scale to match the requested style; keep the geometry block intact.
+  - Layout classes below are a starting vocabulary, not a cage. Add your own
+    CSS for bespoke slides.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deck</title>
+<style>
+  /* ===== GEOMETRY — do not change ===== */
+  @page { size: 13.333in 7.5in; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #444; }
+  section.slide {
+    width: 1280px;
+    height: 720px;
+    position: relative;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    counter-increment: slide;
+  }
+  section.slide:last-of-type { break-after: auto; page-break-after: avoid; }
+  @media screen {
+    body { display: grid; gap: 24px; padding: 24px; justify-content: center; }
+    section.slide { box-shadow: 0 2px 24px rgba(0,0,0,.4); }
+  }
+
+  /* ===== THEME — restyle to match the brief ===== */
+  :root {
+    --bg: #fcfbf8;
+    --surface: #f3f1ea;
+    --ink: #1a1a18;
+    --muted: #6e6a60;
+    --accent: #1d4ed8;
+    --accent-ink: #ffffff;
+    --rule: #dcd8cc;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* ===== LAYOUT VOCABULARY ===== */
+  .slide { padding: 72px 84px 88px; display: flex; flex-direction: column; }
+
+  .kicker {
+    font-size: 14px; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+  h1 { font-size: 64px; font-weight: 750; letter-spacing: -.02em; line-height: 1.05; }
+  h2 { font-size: 40px; font-weight: 700; letter-spacing: -.015em; line-height: 1.12; margin-bottom: 28px; }
+  h3 { font-size: 24px; font-weight: 650; margin-bottom: 10px; }
+  p, li { font-size: 22px; line-height: 1.45; color: var(--ink); }
+  .lead { font-size: 27px; line-height: 1.4; color: var(--muted); }
+  .small, figcaption { font-size: 16px; color: var(--muted); }
+
+  .footer {
+    position: absolute; left: 84px; right: 84px; bottom: 34px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; color: var(--muted);
+    border-top: 1px solid var(--rule); padding-top: 12px;
+  }
+  .footer .num::after { content: counter(slide); }
+
+  /* Cover */
+  .slide--title { justify-content: center; }
+  .slide--title h1 { font-size: 76px; max-width: 1000px; }
+  .slide--title .lead { margin-top: 26px; max-width: 860px; }
+  .slide--title .meta { margin-top: 64px; font-size: 16px; color: var(--muted); }
+
+  /* Section divider */
+  .slide--section { justify-content: center; background: var(--ink); color: var(--bg); }
+  .slide--section .kicker { color: var(--accent); }
+  .slide--section h1 { font-size: 64px; max-width: 980px; color: var(--bg); }
+
+  /* Columns */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; flex: 1; min-height: 0; align-content: start; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* Bullets */
+  ul.bullets { list-style: none; display: grid; gap: 18px; }
+  ul.bullets li { padding-left: 30px; position: relative; }
+  ul.bullets li::before {
+    content: ""; position: absolute; left: 0; top: .58em;
+    width: 14px; height: 3px; background: var(--accent);
+  }
+
+  /* Big numbers */
+  .stats { display: grid; grid-auto-flow: column; gap: 56px; align-content: center; flex: 1; }
+  .stat .value { font-size: 88px; font-weight: 750; letter-spacing: -.03em; color: var(--accent); line-height: 1; }
+  .stat .label { font-size: 19px; color: var(--muted); margin-top: 12px; max-width: 280px; }
+
+  /* Quote */
+  .quote { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 1020px; }
+  .quote blockquote { font-size: 40px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+  .quote blockquote::before { content: "\201C"; color: var(--accent); }
+  .quote blockquote::after { content: "\201D"; color: var(--accent); }
+  .quote cite { margin-top: 28px; font-style: normal; font-size: 18px; color: var(--muted); }
+
+  /* Panels / simple table */
+  .panel { background: var(--surface); border-radius: 10px; padding: 28px 32px; }
+  table { border-collapse: collapse; width: 100%; font-size: 19px; }
+  th { text-align: left; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  th, td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+
+<section class="slide slide--title">
+  <div class="kicker">Quarterly review</div>
+  <h1>A clear, declarative deck title</h1>
+  <p class="lead">One supporting sentence that frames what this deck covers and why it matters.</p>
+  <div class="meta">Author · June 2026</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Context</div>
+  <h2>A content slide carries one idea</h2>
+  <ul class="bullets">
+    <li>Each bullet is a complete, declarative statement, not a fragment of one.</li>
+    <li>Three to five bullets per slide. More belongs on another slide.</li>
+    <li>Keep sentences short. The slide supports the speaker, it does not replace them.</li>
+  </ul>
+  <div class="footer"><span>Deck title</span><span class="num"></span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Results</div>
+  <h2>Numbers earn a slide of their own</h2>
+  <div class="stats">
+    <div class="stat"><div class="value">38%</div><div class="label">What this number measures, stated plainly</div></div>
+    <div class="stat"><div class="value">4.2x</div><div class="label">A second measure with its plain meaning</div></div>
+    <div class="stat"><div class="value">12</div><div class="label">A third measure, no more than three per slide</div></div>
+  </div>
+  <div class="footer"><span>Deck title</span><span class="num"></span></div>
+</section>
+
+<section class="slide slide--section">
+  <div class="kicker">Part two</div>
+  <h1>Section dividers reset attention</h1>
+</section>
+
+<section class="slide">
+  <div class="kicker">Comparison</div>
+  <h2>Two columns when ideas pair</h2>
+  <div class="cols">
+    <div>
+      <h3>Before</h3>
+      <p>A short paragraph describing the prior state. Keep it under four lines so the column breathes.</p>
+    </div>
+    <div>
+      <h3>After</h3>
+      <p>The new state in the same register, so the contrast does the arguing.</p>
+    </div>
+  </div>
+  <div class="footer"><span>Deck title</span><span class="num"></span></div>
+</section>
+
+<section class="slide">
+  <div class="quote">
+    <blockquote>A single strong quotation can hold a whole slide on its own.</blockquote>
+    <cite>Source of the quotation, role or publication</cite>
+  </div>
+  <div class="footer"><span>Deck title</span><span class="num"></span></div>
+</section>
+
+</body>
+</html>

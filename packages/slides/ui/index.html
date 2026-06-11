@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>Slides</title>
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      display: grid;
+      grid-template-rows: 1fr;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+    }
+    .btn {
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 5px;
+      background: var(--color-chrome-mid);
+      color: var(--color-ink-2);
+      font: 600 11px var(--font-sans);
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) { background: var(--color-accent-tint); color: var(--color-accent); }
+    .btn:disabled { opacity: .5; }
+    .btn.primary {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+    .btn.primary:hover:not(:disabled) { filter: brightness(.94); color: var(--color-accent-ink); }
+    [hidden] { display: none !important; }
+    .view { height: 100%; overflow: auto; }
+    .submit-view { display: grid; place-items: start center; padding: 48px 24px 64px; }
+    .center-state { height: 100%; display: grid; place-items: center; padding: 24px; }
+    .submit-panel { width: min(100%, 620px); display: grid; gap: 18px; }
+    .processing-panel, .failed-panel { width: min(100%, 520px); display: grid; gap: 16px; text-align: center; }
+    .head { display: grid; gap: 6px; }
+    .head.centered { text-align: center; }
+    .kicker {
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: 24px; font-weight: 650; line-height: 1.15; }
+    .compact-heading { font-size: 16px; }
+    .lead { margin: 0; color: var(--color-ink-3); font-size: 13px; line-height: 1.45; }
+    .deck-form {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 8px;
+      background: var(--color-chrome-high);
+    }
+    .field { display: grid; gap: 6px; }
+    .field span {
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .field .hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 11px; }
+    select, input, textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--color-rule);
+      border-radius: 5px;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      outline: none;
+    }
+    select, input { height: 32px; padding: 0 8px; font: 12px var(--font-sans); }
+    textarea { resize: vertical; padding: 8px; font: 12px/1.45 var(--font-sans); }
+    select:focus, input:focus, textarea:focus { border-color: var(--color-accent); }
+    #brief { min-height: 150px; }
+    .reference-editor { display: grid; gap: 8px; }
+    .reference-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+    .reference-label {
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .reference-help { margin-top: 2px; color: var(--color-ink-3); font-size: 11px; line-height: 1.35; }
+    .reference-list { display: grid; gap: 8px; }
+    .reference-row {
+      display: grid;
+      grid-template-columns: 108px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .reference-path {
+      font: 11px var(--font-mono);
+      color: var(--color-ink-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      direction: rtl;
+      text-align: left;
+    }
+    .reference-notes { grid-column: 2 / 3; }
+    .reference-remove { width: 28px; padding: 0; }
+    .reference-empty {
+      padding: 8px 10px;
+      border: 1px dashed var(--color-rule-light);
+      border-radius: 6px;
+      color: var(--color-ink-3);
+      font-size: 11px;
+    }
+    .reference-picker {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 6px;
+      background: var(--color-surface);
+    }
+    .picker-head { display: flex; gap: 8px; align-items: center; }
+    .picker-head input { flex: 1; height: 28px; padding: 0 8px; font: 12px var(--font-sans); }
+    .picker-crumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--color-ink-3);
+      min-height: 16px;
+    }
+    .picker-crumbs button {
+      border: 0;
+      background: none;
+      padding: 0 2px;
+      color: var(--color-ink-3);
+      font: 600 11px var(--font-sans);
+      cursor: pointer;
+    }
+    .picker-crumbs button:hover { color: var(--color-accent); }
+    .picker-crumbs .sep { color: var(--color-rule); }
+    .picker-list {
+      display: grid;
+      gap: 1px;
+      max-height: 190px;
+      overflow: auto;
+      border-radius: 4px;
+    }
+    .picker-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 5px 8px;
+      border: 0;
+      border-radius: 4px;
+      background: none;
+      color: var(--color-ink-2);
+      font: 12px var(--font-sans);
+      text-align: left;
+      cursor: pointer;
+      min-width: 0;
+    }
+    .picker-entry:hover:not(:disabled) { background: var(--color-accent-tint); color: var(--color-accent); }
+    .picker-entry:disabled { color: var(--color-ink-3); cursor: default; }
+    .picker-entry .entry-icon { flex-shrink: 0; width: 14px; text-align: center; color: var(--color-ink-3); }
+    .picker-entry .entry-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .picker-entry .entry-dir {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-ink-3);
+      font: 10px var(--font-mono);
+    }
+    .picker-entry .entry-added { margin-left: auto; flex-shrink: 0; font-size: 10px; color: var(--color-ink-3); }
+    .picker-note { font-size: 11px; color: var(--color-ink-3); padding: 2px 0; }
+    .picker-note.error { color: var(--color-danger, #b3261e); }
+    .form-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .status { font-size: 11px; color: var(--color-ink-3); min-height: 14px; }
+    .status.error { color: var(--color-danger, #b3261e); }
+    .progress-track {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--color-chrome-mid);
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      border-radius: 2px;
+      background: var(--color-accent);
+      transition: width .4s ease;
+    }
+    .run-line { display: flex; justify-content: center; gap: 8px; align-items: baseline; font-size: 11px; color: var(--color-ink-3); }
+    .run-line code { font: 10px var(--font-mono); }
+    .event-list {
+      display: grid;
+      gap: 4px;
+      max-height: 200px;
+      overflow: auto;
+      text-align: left;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 6px;
+      background: var(--color-surface);
+    }
+    .event { display: grid; grid-template-columns: 72px 1fr; gap: 8px; font-size: 11px; color: var(--color-ink-2); }
+    .event code { font: 10px var(--font-mono); color: var(--color-ink-3); }
+    .result-view { display: grid; grid-template-rows: auto 1fr; height: 100%; min-height: 0; }
+    .result-body { display: grid; grid-template-rows: auto auto auto auto auto auto 1fr; min-height: 0; }
+    .result-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-chrome-high);
+    }
+    .result-meta { display: grid; gap: 2px; min-width: 0; }
+    .result-title { font-size: 13px; font-weight: 650; }
+    .result-sub { font-size: 11px; color: var(--color-ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .result-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .usage-line {
+      padding: 4px 18px;
+      font-size: 10px;
+      color: var(--color-ink-3);
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-chrome-high);
+    }
+    .issue-strip {
+      padding: 8px 18px;
+      font-size: 11px;
+      color: var(--color-ink-2);
+      background: var(--color-warning-tint, #fdf3da);
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+    .design-review {
+      padding: 8px 18px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--color-ink-2);
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-surface);
+    }
+    .design-review .finding { margin: 2px 0; }
+    .design-review .finding.resolved { text-decoration: line-through; color: var(--color-ink-3); }
+    .design-review .severity-major { font-weight: 600; }
+    .design-review .skipped { color: var(--color-ink-3); font-style: italic; }
+    .refine-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-chrome-high);
+    }
+    .refine-bar input {
+      flex: 1;
+      height: 28px;
+      padding: 0 8px;
+      font: 12px var(--font-sans);
+    }
+    .preview-wrap { overflow: auto; min-height: 0; background: var(--color-chrome-low, var(--color-chrome-mid)); }
+    .preview-scale { transform-origin: top left; }
+    .preview-scale iframe { border: 0; display: block; }
+    .summary-block {
+      padding: 10px 18px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--color-ink-2);
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-surface);
+    }
+    .spinner {
+      width: 22px; height: 22px;
+      margin: 0 auto;
+      border: 2px solid var(--color-chrome-mid);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="view submit-view" id="submitView">
+    <div class="submit-panel">
+      <div class="head">
+        <div class="kicker">Slides</div>
+        <h1>Generate a deck</h1>
+        <p class="lead">Describe the deck. The agent writes paginated HTML on PowerPoint geometry, checks every slide fits its page, and exports a print-exact PDF.</p>
+      </div>
+      <div class="deck-form">
+        <label class="field">
+          <span>Brief</span>
+          <textarea id="brief" placeholder="What is this deck about? Include style and format wishes too — tone, branding, density, slide count. For example: dark and minimal, about 8 slides, big numbers."></textarea>
+        </label>
+        <div class="reference-editor">
+          <div class="reference-head">
+            <div>
+              <div class="reference-label">References</div>
+              <div class="reference-help">Attach workspace files as sources, HTML/CSS templates, examples, or assets.</div>
+            </div>
+            <button class="btn" id="addReferenceButton">Add files</button>
+          </div>
+          <div class="reference-picker" id="referencePicker" hidden>
+            <div class="picker-head">
+              <input type="text" id="referenceSearch" placeholder="Search workspace files" aria-label="Search workspace files">
+              <button class="btn" id="pickerCloseButton">Done</button>
+            </div>
+            <div class="picker-crumbs" id="pickerCrumbs"></div>
+            <div class="picker-list" id="pickerList"></div>
+          </div>
+          <div class="reference-list" id="referenceList"></div>
+        </div>
+        <label class="field">
+          <span>Model</span>
+          <select id="model"></select>
+        </label>
+        <div class="form-actions">
+          <div class="status" id="submitStatus"></div>
+          <button class="btn primary" id="generateButton" disabled>Generate deck</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view center-state" id="processingView" hidden>
+    <div class="processing-panel">
+      <div class="spinner"></div>
+      <div class="head centered">
+        <div class="kicker">Working</div>
+        <h1 id="processingStatus" class="compact-heading">Starting</h1>
+      </div>
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="event-list" id="eventList"></div>
+      <div class="run-line"><span>Run</span><code id="runId"></code></div>
+      <button class="btn" id="cancelButton">Cancel</button>
+    </div>
+  </div>
+
+  <div class="view center-state" id="failedView" hidden>
+    <div class="failed-panel">
+      <div class="head centered">
+        <div class="kicker">Failed</div>
+        <h1 class="compact-heading" id="failedMessage"></h1>
+      </div>
+      <button class="btn" id="tryAgainButton">Back to brief</button>
+    </div>
+  </div>
+
+  <div class="view result-view" id="resultView" hidden>
+    <div class="result-bar">
+      <div class="result-meta">
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-sub" id="resultSub"></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn" id="newDeckButton">New deck</button>
+        <button class="btn" id="openHtmlButton">Open HTML in editor</button>
+        <button class="btn primary" id="openPdfButton">Open PDF</button>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="usage-line" id="usageLine" hidden></div>
+      <div class="summary-block" id="summaryBlock" hidden></div>
+      <div class="design-review" id="designReview" hidden></div>
+      <div class="issue-strip" id="issueStrip" hidden></div>
+      <div class="refine-bar" id="refineBar">
+        <input type="text" id="refineInput" placeholder="Make slide 4 a bar chart of the Q2 numbers">
+        <button class="btn primary" id="refineButton">Refine</button>
+      </div>
+      <div class="preview-wrap" id="previewWrap">
+        <div class="preview-scale" id="previewScale"><iframe id="previewFrame" sandbox=""></iframe></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { runtime } from '/sdk/mim.js'
+
+    const el = Object.fromEntries([
+      'submitView', 'processingView', 'failedView', 'resultView',
+      'brief', 'model', 'submitStatus', 'generateButton',
+      'addReferenceButton', 'referenceList',
+      'referencePicker', 'referenceSearch', 'pickerCloseButton', 'pickerCrumbs', 'pickerList',
+      'processingStatus', 'progressBar', 'eventList', 'runId', 'cancelButton',
+      'failedMessage', 'tryAgainButton',
+      'resultTitle', 'resultSub', 'newDeckButton', 'openHtmlButton', 'openPdfButton',
+      'summaryBlock', 'issueStrip', 'previewWrap', 'previewScale', 'previewFrame',
+      'usageLine', 'designReview', 'refineBar', 'refineInput', 'refineButton',
+    ].map(id => [id, document.getElementById(id)]))
+
+    const PREVIEW_WIDTH = 1328 // 1280px slide + 24px screen padding each side
+
+    let activeRunId = null
+    let unsubscribe = null
+    let activeResult = null
+    let activeJobKind = 'generate' // 'generate' or 'refine'
+    let modelError = ''
+    let referenceCounter = 0
+    const referenceRows = []
+    let modelPricingMap = new Map() // modelId -> { inputPerMillion, outputPerMillion, cacheReadInputPerMillion }
+    const referenceRoles = [
+      ['source', 'Source'],
+      ['template', 'Template'],
+      ['example', 'Example'],
+      ['asset', 'Asset'],
+    ]
+
+    function show(view) {
+      el.submitView.hidden = view !== 'submit'
+      el.processingView.hidden = view !== 'processing'
+      el.failedView.hidden = view !== 'failed'
+      el.resultView.hidden = view !== 'result'
+    }
+
+    function setStatus(text, error = false) {
+      el.submitStatus.textContent = text
+      el.submitStatus.classList.toggle('error', error)
+    }
+
+    function updateGenerateButton() {
+      el.generateButton.disabled = !el.brief.value.trim() || !el.model.value || !!modelError
+    }
+
+    function addReference(role, path) {
+      if (referenceRows.some(row => row.path === path)) return
+      referenceRows.push({ id: ++referenceCounter, role, path, notes: '' })
+      renderReferences()
+      renderPickerList()
+    }
+
+    function removeReference(id) {
+      const index = referenceRows.findIndex(row => row.id === id)
+      if (index >= 0) referenceRows.splice(index, 1)
+      renderReferences()
+      renderPickerList()
+    }
+
+    function renderReferences() {
+      el.referenceList.innerHTML = ''
+      if (!referenceRows.length) {
+        const empty = document.createElement('div')
+        empty.className = 'reference-empty'
+        empty.textContent = 'No files attached.'
+        el.referenceList.appendChild(empty)
+        return
+      }
+      for (const row of referenceRows) {
+        const wrap = document.createElement('div')
+        wrap.className = 'reference-row'
+
+        const role = document.createElement('select')
+        role.setAttribute('aria-label', 'Reference role')
+        for (const [value, label] of referenceRoles) {
+          const option = document.createElement('option')
+          option.value = value
+          option.textContent = label
+          option.selected = row.role === value
+          role.appendChild(option)
+        }
+        role.addEventListener('change', () => { row.role = role.value })
+
+        const path = document.createElement('div')
+        path.className = 'reference-path'
+        path.textContent = row.path
+        path.title = row.path
+
+        const remove = document.createElement('button')
+        remove.className = 'btn reference-remove'
+        remove.textContent = '×'
+        remove.title = 'Remove reference'
+        remove.setAttribute('aria-label', 'Remove reference')
+        remove.addEventListener('click', () => removeReference(row.id))
+
+        const notes = document.createElement('input')
+        notes.className = 'reference-notes'
+        notes.placeholder = 'Optional note for this file'
+        notes.value = row.notes
+        notes.setAttribute('aria-label', 'Reference notes')
+        notes.addEventListener('input', () => { row.notes = notes.value })
+
+        wrap.append(role, path, remove, notes)
+        el.referenceList.appendChild(wrap)
+      }
+    }
+
+    function collectReferences() {
+      return referenceRows
+        .map(row => ({
+          role: row.role,
+          path: row.path.trim(),
+          notes: row.notes.trim(),
+        }))
+        .filter(row => row.path)
+    }
+
+    // --- Workspace file picker ---
+
+    const picker = { dir: '.', query: '', entries: [], note: '', error: '', seq: 0 }
+    let pickerDebounce = null
+
+    function inferRole(path) {
+      const ext = (path.split('.').pop() || '').toLowerCase()
+      if (ext === 'html' || ext === 'css') return 'template'
+      if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return 'asset'
+      return 'source'
+    }
+
+    function openPicker() {
+      el.referencePicker.hidden = false
+      el.referenceSearch.value = picker.query
+      el.referenceSearch.focus()
+      loadPickerEntries()
+    }
+
+    function closePicker() {
+      el.referencePicker.hidden = true
+    }
+
+    async function loadPickerEntries() {
+      const seq = ++picker.seq
+      picker.error = ''
+      picker.note = 'Loading…'
+      renderPickerList()
+      try {
+        const params = picker.query
+          ? { path: '.', recursive: true, pattern: `*${picker.query}*`, max_entries: 100 }
+          : { path: picker.dir, max_entries: 200 }
+        const result = await runtime.call('fs.list', params)
+        if (seq !== picker.seq) return
+        picker.entries = (result.entries || []).filter(entry => {
+          const name = entry.name || ''
+          return !name.startsWith('.') && !(entry.path || '').split('/').some(part => part.startsWith('.'))
+        })
+        picker.note = picker.entries.length ? '' : (picker.query ? 'No matches.' : 'Empty directory.')
+        if (result.truncated) picker.note = 'Showing the first matches; narrow the search for more.'
+      } catch (err) {
+        if (seq !== picker.seq) return
+        picker.entries = []
+        picker.error = err.message
+      }
+      renderPickerCrumbs()
+      renderPickerList()
+    }
+
+    function renderPickerCrumbs() {
+      el.pickerCrumbs.innerHTML = ''
+      if (picker.query) {
+        const note = document.createElement('span')
+        note.textContent = 'Searching the whole workspace'
+        el.pickerCrumbs.appendChild(note)
+        return
+      }
+      const segments = picker.dir === '.' ? [] : picker.dir.split('/')
+      const crumbs = [{ label: 'Workspace', dir: '.' }]
+      segments.forEach((segment, index) => {
+        crumbs.push({ label: segment, dir: segments.slice(0, index + 1).join('/') })
+      })
+      crumbs.forEach((crumb, index) => {
+        if (index > 0) {
+          const sep = document.createElement('span')
+          sep.className = 'sep'
+          sep.textContent = '/'
+          el.pickerCrumbs.appendChild(sep)
+        }
+        const button = document.createElement('button')
+        button.textContent = crumb.label
+        button.addEventListener('click', () => {
+          picker.dir = crumb.dir
+          loadPickerEntries()
+        })
+        el.pickerCrumbs.appendChild(button)
+      })
+    }
+
+    function renderPickerList() {
+      el.pickerList.innerHTML = ''
+      if (picker.error || picker.note) {
+        const note = document.createElement('div')
+        note.className = picker.error ? 'picker-note error' : 'picker-note'
+        note.textContent = picker.error || picker.note
+        el.pickerList.appendChild(note)
+        if (picker.error) return
+      }
+      const sorted = [...picker.entries].sort((a, b) =>
+        a.type === b.type ? a.path.localeCompare(b.path) : (a.type === 'directory' ? -1 : 1))
+      for (const entry of sorted) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'picker-entry'
+
+        const icon = document.createElement('span')
+        icon.className = 'entry-icon'
+        icon.textContent = entry.type === 'directory' ? '▸' : '·'
+
+        const name = document.createElement('span')
+        name.className = 'entry-name'
+        name.textContent = entry.name
+
+        button.append(icon, name)
+
+        if (picker.query && entry.path.includes('/')) {
+          const dir = document.createElement('span')
+          dir.className = 'entry-dir'
+          dir.textContent = entry.path.slice(0, entry.path.lastIndexOf('/'))
+          button.appendChild(dir)
+        }
+
+        if (entry.type === 'directory') {
+          button.addEventListener('click', () => {
+            picker.dir = entry.path
+            picker.query = ''
+            el.referenceSearch.value = ''
+            loadPickerEntries()
+          })
+        } else if (referenceRows.some(row => row.path === entry.path)) {
+          button.disabled = true
+          const added = document.createElement('span')
+          added.className = 'entry-added'
+          added.textContent = '✓ added'
+          button.appendChild(added)
+        } else {
+          button.addEventListener('click', () => addReference(inferRole(entry.path), entry.path))
+        }
+        el.pickerList.appendChild(button)
+      }
+    }
+
+    // Inline deck-capable model filter (shared/models.mjs cannot be imported
+    // because the package server restricts static file serving to the ui/
+    // subdirectory — paths like ../shared/models.mjs are rejected).
+    function deckCapableModels(models) {
+      if (!Array.isArray(models)) return []
+      return models.filter(model =>
+        model &&
+        model.provider === 'anthropic' &&
+        model.capabilities?.tools !== false &&
+        model.capabilities?.text !== false,
+      )
+    }
+
+    async function loadModels() {
+      try {
+        const [registry, keys] = await Promise.all([runtime.ai.registry(), runtime.ai.keyStatus()])
+        const anthropicKey = (keys?.statuses || []).find(item => item.provider === 'anthropic')
+        if (anthropicKey && anthropicKey.configured === false) {
+          modelError = 'No Anthropic API key configured. Add one in Settings.'
+          setStatus(modelError, true)
+        }
+        const models = deckCapableModels(registry?.models || [])
+        const defaults = registry?.defaults?.agent || registry?.defaults?.chat || []
+        el.model.innerHTML = ''
+        modelPricingMap = new Map()
+        for (const model of models) {
+          const option = document.createElement('option')
+          option.value = model.id
+          option.textContent = model.name || model.id
+          if (defaults.includes(model.id) || defaults.includes(model.model)) option.selected = true
+          el.model.appendChild(option)
+          if (model.pricing) modelPricingMap.set(model.id, model.pricing)
+          if (model.model && model.pricing) modelPricingMap.set(model.model, model.pricing)
+        }
+        if (!models.length) {
+          modelError = 'No Anthropic models available.'
+          setStatus(modelError, true)
+        }
+      } catch (err) {
+        modelError = err.message
+        setStatus(modelError, true)
+      }
+      updateGenerateButton()
+    }
+
+    async function generate() {
+      const brief = el.brief.value.trim()
+      if (!brief) return
+      activeJobKind = 'generate'
+      startProcessingView()
+      try {
+        const inputs = { brief, modelId: el.model.value }
+        const references = collectReferences()
+        if (references.length) inputs.references = references
+        const run = await runtime.jobs.start('generateDeck', inputs, { openWork: false })
+        activeRunId = run.runId
+        el.runId.textContent = activeRunId
+        unsubscribe?.()
+        unsubscribe = runtime.jobs.on(activeRunId, handleJobEvent)
+        await refreshActiveRun()
+      } catch (err) {
+        showFailure(err.message)
+      }
+    }
+
+    async function refine() {
+      const instruction = el.refineInput.value.trim()
+      if (!instruction || !activeResult?.deckDir) return
+      activeJobKind = 'refine'
+      startProcessingView()
+      try {
+        const inputs = { deckDir: activeResult.deckDir, instruction, modelId: el.model.value }
+        const run = await runtime.jobs.start('refineDeck', inputs, { openWork: false })
+        activeRunId = run.runId
+        el.runId.textContent = activeRunId
+        unsubscribe?.()
+        unsubscribe = runtime.jobs.on(activeRunId, handleJobEvent)
+        await refreshActiveRun()
+      } catch (err) {
+        showFailure(err.message)
+      }
+    }
+
+    function startProcessingView() {
+      el.eventList.innerHTML = ''
+      el.progressBar.style.width = '0%'
+      el.processingStatus.textContent = 'Starting'
+      show('processing')
+    }
+
+    async function handleJobEvent(event) {
+      try {
+        addEvent(event)
+        if (event.type === 'job.progress') {
+          const value = Number(event.data?.value || 0)
+          el.progressBar.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`
+          if (event.data?.label) el.processingStatus.textContent = String(event.data.label)
+        }
+        if (event.type === 'job.step' && event.data?.name) {
+          el.processingStatus.textContent = String(event.data.name)
+        }
+        if (event.type === 'job.done' || event.type === 'job.failed' || event.type === 'job.cancelled') {
+          await refreshActiveRun(event.data?.error)
+        }
+      } catch (err) {
+        showFailure(err.message)
+      }
+    }
+
+    async function refreshActiveRun(eventError = '') {
+      if (!activeRunId) return
+      const latest = await runtime.jobs.get(activeRunId)
+      const run = latest?.run || latest
+      if (!run || !['completed', 'failed', 'cancelled'].includes(run.status)) return
+      if (run.status === 'completed') {
+        const result = run.result || {}
+        if (result.status === 'complete') return renderComplete(result)
+        return showFailure(result.reason || 'The deck agent did not produce a deck.')
+      }
+      showFailure(run.error || eventError || run.status)
+    }
+
+    function addEvent(event) {
+      const row = document.createElement('div')
+      row.className = 'event'
+      const body = event.data?.name || event.data?.label || event.data?.message || event.data?.summary || event.data?.error || event.type
+      row.innerHTML = `<code>${escapeHtml(event.type.replace('job.', ''))}</code><span>${escapeHtml(String(body))}</span>`
+      el.eventList.prepend(row)
+    }
+
+    function showFailure(message) {
+      unsubscribe?.()
+      el.failedMessage.textContent = message || 'Something went wrong.'
+      el.tryAgainButton.textContent = activeJobKind === 'refine' ? 'Back to deck' : 'Back to brief'
+      show('failed')
+    }
+
+    async function renderComplete(result) {
+      unsubscribe?.()
+      el.progressBar.style.width = '100%'
+      activeResult = result
+      const slides = result.slideCount ? `${result.slideCount} slides` : 'Deck'
+      el.resultTitle.textContent = result.clean ? `${slides}, layout clean` : `${slides}, with layout warnings`
+      el.resultSub.textContent = result.pdfPath || ''
+
+      // Usage/cost line
+      renderUsageLine(result)
+
+      if (result.summary) {
+        el.summaryBlock.textContent = result.summary
+        el.summaryBlock.hidden = false
+      } else {
+        el.summaryBlock.hidden = true
+      }
+
+      // Design review findings
+      renderDesignReview(result.designReview)
+
+      const issues = result.issues || []
+      if (issues.length) {
+        el.issueStrip.textContent = issues
+          .map(issue => `${issue.slide ? `Slide ${issue.slide}` : 'Deck'} — ${issue.detail}`)
+          .join('  ·  ')
+        el.issueStrip.hidden = false
+      } else {
+        el.issueStrip.hidden = true
+      }
+
+      // Reset refine input
+      el.refineInput.value = ''
+
+      show('result')
+      await loadPreview(result.htmlPath)
+    }
+
+    function renderUsageLine(result) {
+      const usage = result.usage
+      if (!usage || typeof usage !== 'object') {
+        el.usageLine.hidden = true
+        return
+      }
+      let totalInput = 0
+      let totalOutput = 0
+      let totalCacheRead = 0
+      for (const [, phaseUsage] of Object.entries(usage)) {
+        if (!phaseUsage) continue
+        // Handle both single usage objects and arrays of usage objects (e.g. sections, critique)
+        const items = Array.isArray(phaseUsage) ? phaseUsage : [phaseUsage]
+        for (const u of items) {
+          if (!u || typeof u !== 'object') continue
+          // Anthropic direct: { input, output, cacheRead }
+          // Vercel AI SDK: { promptTokens, completionTokens }
+          totalInput += Number(u.input || u.promptTokens || 0)
+          totalOutput += Number(u.output || u.completionTokens || 0)
+          totalCacheRead += Number(u.cacheRead || 0)
+        }
+      }
+      if (totalInput === 0 && totalOutput === 0) {
+        el.usageLine.hidden = true
+        return
+      }
+      let text = `${formatTokens(totalInput)} input, ${formatTokens(totalOutput)} output`
+      if (totalCacheRead > 0) text += `, ${formatTokens(totalCacheRead)} cache-read`
+
+      // Estimate cost from model pricing if available
+      const modelId = result.techNotes?.model || ''
+      const pricing = modelPricingMap.get(modelId)
+      if (pricing) {
+        const cost =
+          (totalInput / 1_000_000) * (pricing.inputPerMillion || 0) +
+          (totalOutput / 1_000_000) * (pricing.outputPerMillion || 0) +
+          (totalCacheRead / 1_000_000) * (pricing.cacheReadInputPerMillion || 0)
+        if (cost > 0) text += ` ~ $${cost < 0.01 ? cost.toFixed(4) : cost.toFixed(2)}`
+      }
+
+      el.usageLine.textContent = text
+      el.usageLine.hidden = false
+    }
+
+    function formatTokens(n) {
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+      if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+      return String(n)
+    }
+
+    function renderDesignReview(review) {
+      if (!review || typeof review !== 'object') {
+        el.designReview.hidden = true
+        return
+      }
+      const findings = Array.isArray(review.findings) ? review.findings : []
+      const skipped = review.skipped
+      if (findings.length === 0 && !skipped) {
+        el.designReview.hidden = true
+        return
+      }
+      el.designReview.innerHTML = ''
+      for (const f of findings) {
+        const div = document.createElement('div')
+        div.className = f.resolved ? 'finding resolved' : 'finding'
+        const severityClass = f.severity === 'major' ? 'severity-major' : ''
+        const prefix = f.resolved ? '✓ ' : ''
+        div.innerHTML = `${escapeHtml(prefix)}<span class="${severityClass}">Slide ${escapeHtml(f.slideId || '?')}</span> — ${escapeHtml(f.severity || 'minor')} — ${escapeHtml(f.problem || '')}${f.fix ? '; fix: ' + escapeHtml(f.fix) : ''}`
+        el.designReview.appendChild(div)
+      }
+      if (skipped) {
+        const p = document.createElement('div')
+        p.className = 'skipped'
+        p.textContent = String(skipped)
+        el.designReview.appendChild(p)
+      }
+      el.designReview.hidden = false
+    }
+
+    async function loadPreview(htmlPath) {
+      el.previewFrame.srcdoc = ''
+      if (!htmlPath) return
+      try {
+        const file = await runtime.call('fs.read', { path: htmlPath, max_chars: 200000 })
+        if (file.truncated) return
+        el.previewFrame.srcdoc = file.content
+        requestAnimationFrame(scalePreview)
+      } catch {
+        // Preview is best-effort; the PDF and editor buttons still work.
+      }
+    }
+
+    function scalePreview() {
+      const available = el.previewWrap.clientWidth
+      if (!available) return
+      const scale = Math.min(1, available / PREVIEW_WIDTH)
+      const slides = activeResult?.slideCount || 1
+      const fullHeight = slides * 744 + 48 // 720px slide + 24px gap, plus body padding
+      el.previewFrame.width = PREVIEW_WIDTH
+      el.previewFrame.height = fullHeight
+      el.previewScale.style.transform = `scale(${scale})`
+      el.previewScale.style.width = `${PREVIEW_WIDTH}px`
+      el.previewScale.style.height = `${fullHeight}px`
+      el.previewWrap.style.setProperty('--scaled-height', `${fullHeight * scale}px`)
+      el.previewScale.parentElement.style.height = ''
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+      ))
+    }
+
+    el.generateButton.addEventListener('click', generate)
+    el.brief.addEventListener('input', updateGenerateButton)
+    el.addReferenceButton.addEventListener('click', () => {
+      if (el.referencePicker.hidden) openPicker()
+      else closePicker()
+    })
+    el.pickerCloseButton.addEventListener('click', closePicker)
+    el.referenceSearch.addEventListener('input', () => {
+      picker.query = el.referenceSearch.value.trim()
+      clearTimeout(pickerDebounce)
+      pickerDebounce = setTimeout(loadPickerEntries, 200)
+    })
+    el.cancelButton.addEventListener('click', async () => {
+      if (!activeRunId) return show('submit') // start never completed; back to the form
+      await runtime.jobs.cancel(activeRunId).catch(() => {})
+    })
+    el.tryAgainButton.addEventListener('click', () => {
+      if (activeJobKind === 'refine' && activeResult) {
+        // Return to result view with the previous result intact
+        show('result')
+      } else {
+        show('submit')
+      }
+    })
+    el.newDeckButton.addEventListener('click', () => show('submit'))
+    el.refineButton.addEventListener('click', refine)
+    el.refineInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); refine() }
+    })
+    el.openPdfButton.addEventListener('click', () => {
+      if (activeResult?.pdfPath) runtime.call('fs.openNative', { path: activeResult.pdfPath })
+    })
+    el.openHtmlButton.addEventListener('click', () => {
+      if (activeResult?.htmlPath) runtime.call('editor.open', { path: activeResult.htmlPath })
+    })
+    window.addEventListener('resize', () => { if (!el.resultView.hidden) scalePreview() })
+
+    renderReferences()
+
+    await runtime.ready
+    await loadModels()
+  </script>
+</body>
+</html>

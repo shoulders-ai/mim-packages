@@ -1,0 +1,71 @@
+{
+  "slug": "meta-analysis",
+  "kind": "Systematic review / meta-analysis (PRISMA)",
+  "defects": [
+    {
+      "id": "d1",
+      "category": "statistics",
+      "locationSnippet": "Antibiotic classes, treatment durations, and AAD definitions varied substantially across trials; some defined AAD as ≥3 loose stools in 24 hours, while others required a positive stool assay or a minimum duration of symptoms.",
+      "description": "Heterogeneity is acknowledged narratively (varied populations, definitions, three decades of trials, a 70-fold range in trial size, and one large trial showing no effect while smaller trials show large effects) but is never quantified. No I^2, Cochran's Q, tau^2, or prediction interval is reported anywhere despite a DerSimonian-Laird random-effects model being used. PRISMA and the Higgins & Thompson reference (which is cited but never applied) require heterogeneity to be measured and reported. With this much clinical diversity and a discordant large trial, pooling without reporting I^2 is a serious omission that can mask important between-study variation.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d2",
+      "category": "statistics",
+      "locationSnippet": "Sterne JAC, Sutton AJ, Ioannidis JPA, et al. Recommendations for examining and interpreting funnel plot asymmetry in meta-analyses of randomised controlled trials. *BMJ.* 2011;343:d4002.",
+      "description": "Publication bias is never assessed. The Sterne et al. funnel-plot guidance is listed in the references but is never cited or applied in the text, and no funnel plot, Egger's test, or trim-and-fill analysis is reported. With 22 trials (well above the 10-study threshold at which funnel-plot methods are recommended), many small positive trials, and a large trial showing no effect, the dataset is a textbook small-study-effects scenario. Omitting any publication-bias assessment is a major reporting and validity defect for a PRISMA meta-analysis.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d3",
+      "category": "statistics",
+      "locationSnippet": "The pooled estimate indicates that probiotics reduce the risk of AAD by 62% relative to control.",
+      "description": "Effect-size misinterpretation. An RR of 0.62 corresponds to a 38% relative risk reduction (1 - 0.62 = 0.38), not a 62% reduction. The abstract confuses the risk ratio value with the relative risk reduction. The Results and Discussion sections correctly state a 38% reduction, making this an internal inconsistency as well as a quantitative error in the most-read part of the paper.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d4",
+      "category": "statistics",
+      "locationSnippet": "Because the 95% confidence interval was relatively narrow and excluded 1.0, we can be confident that the true population effect lies very close to a 38% relative risk reduction.",
+      "description": "Confidence-interval misinterpretation. The authors treat a 'narrow' CI that excludes the null as evidence that the true effect lies very close to the point estimate. A 95% CI of 0.51 to 0.75 spans risk reductions from 25% to 49%, a clinically wide range; it does not justify confidence that the truth is near 38%. A CI is not a probability statement about the true value being near the point estimate, and the interval is not actually narrow. This also ignores that the random-effects CI describes the mean effect, not the range of true effects (which would need a prediction interval).",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d5",
+      "category": "citation",
+      "locationSnippet": "Marwood TR, Castellano P, Okonkwo I...... Multi-strain probiotic prophylaxis abolishes antibiotic-associated diarrhoea in a tertiary intensive care cohort: a definitive randomised trial. *Journal of Gastrointestinal Prophylaxis.* 2019;14(2):88–101.",
+      "description": "Fabricated-looking reference. This entry has hallmarks of a hallucinated or fabricated citation: truncated/garbled author list ('Okonkwo I......'), an implausibly strong title claiming the intervention 'abolishes' the outcome ('definitive randomised trial'), and a non-existent journal ('Journal of Gastrointestinal Prophylaxis'). It is never cited in the body text. A reviewer must flag it as unverifiable and likely fabricated.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d6",
+      "category": "citation",
+      "locationSnippet": "Hempel S, Newberry SJ, Maher AR, et al. Probiotics for the prevention and treatment of antibiotic-associated diarrhea: a systematic review and meta-analysis. *JAMA.* 2012;307(18):1959–1969.",
+      "description": "Uncited bibliography entry. This Hempel et al. (2012) reference is a real and relevant prior meta-analysis but is listed in the References section while never being cited at any in-text location. The Introduction's claim of 'several previous syntheses' and the Discussion's 'consistent with earlier syntheses' make no citations, leaving this entry orphaned. Orphan references indicate sloppy reference management and break the citation-to-bibliography correspondence required by reporting standards.",
+      "severity": "minor",
+      "mustCatch": true
+    },
+    {
+      "id": "d7",
+      "category": "reporting",
+      "locationSnippet": "we recommend that probiotic supplementation be adopted as routine prophylaxis for all adult inpatients commencing systemic antibiotics",
+      "description": "Overreaching clinical recommendation unsupported by the evidence presented. A universal 'all adult inpatients' recommendation ignores unresolved heterogeneity, the unassessed publication bias, the null result in the single largest trial, and the unknown optimal strain/dose/duration that the authors themselves acknowledge. The conclusion strength is not calibrated to the certainty of the evidence (e.g., no GRADE assessment), which is a reporting and interpretation defect.",
+      "severity": "minor",
+      "mustCatch": false
+    }
+  ],
+  "cleanClaims": [
+    "We pooled RRs across trials using a DerSimonian and Laird random-effects model, which we selected a priori because we anticipated clinical and methodological diversity across trials.",
+    "Two reviewers (initials redacted) independently screened titles and abstracts, then full texts, against the eligibility criteria.",
+    "Two reviewers independently assessed risk of bias using the Cochrane Risk of Bias 2 (RoB 2) tool.",
+    "The review protocol was registered prospectively with PROSPERO (CRD42024XXXXXX) and the review was conducted and reported in accordance with the PRISMA 2020 statement (Page et al., 2021).",
+    "We searched MEDLINE (via Ovid), Embase (via Ovid), and CENTRAL from database inception to 31 August 2024.",
+    "probiotic supplementation reduced the incidence of antibiotic-associated diarrhoea by 38% relative to control, with a pooled risk ratio of 0.62 (95% CI 0.51 to 0.75)",
+    "No language restrictions were applied."
+  ]
+}

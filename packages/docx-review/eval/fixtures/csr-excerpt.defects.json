@@ -1,0 +1,46 @@
+{
+  "slug": "csr-excerpt",
+  "kind": "Clinical study report excerpt (ICH E3)",
+  "defects": [
+    {
+      "id": "d1",
+      "category": "statistics",
+      "locationSnippet": "In the Per-Protocol Set, 64.1% of participants in the dapagliravir group achieved PASI 75 compared with 9.8% in the placebo group",
+      "description": "ITT-vs-per-protocol inconsistency. Section 3.2 (Primary Efficacy Analysis) and the prose in 4.3 state the primary endpoint was analyzed on the Full Analysis Set / ITT population ('The primary analysis was performed on the Full Analysis Set.'). However, the actual reporting of the primary result in Section 4.3 attributes the 64.1% vs 9.8% response rates to the Per-Protocol Set. The headline efficacy result is therefore reported on the wrong (and prespecified-secondary) population. For a confirmatory primary endpoint this is a serious deviation: PP analysis excludes discontinuations/protocol deviators and inflates the apparent treatment effect, undermining the ITT principle. The Synopsis quotes the same numbers as if they were the FAS result, compounding the inconsistency.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d2",
+      "category": "missing-data",
+      "locationSnippet": "missing values at Week 16 were imputed using last observation carried forward (LOCF)",
+      "description": "Mishandled missing data with no estimand defined. LOCF is used for continuous secondary endpoints, but the report never defines an estimand (per ICH E9(R1), which it cites in the References) nor an intercurrent-event strategy. LOCF is a discredited single-imputation method that assumes the disease trajectory freezes at the last visit, biases estimates in an unpredictable direction, and understates uncertainty (it ignores imputation variance). The stated justification ('expectation that most discontinuations would occur late in the study') is unsupported and self-serving; no sensitivity analysis (e.g., multiple imputation, tipping-point, or reference-based imputation) is provided despite the cited NRC missing-data guidance. The absence of any estimand framework for a confirmatory trial is itself a major reporting/methodological gap.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d3",
+      "category": "safety",
+      "locationSnippet": "Serious infections were rare and occurred at a low frequency comparable to placebo.",
+      "description": "Under-reported adverse events contradicting the safety table. The narrative safety summary claims serious infections were 'rare' and 'comparable to placebo,' but Table 5-1 shows serious infections in 8 (2.6%) dapagliravir vs 2 (0.7%) placebo participants -- an approximately 3.7-fold higher rate, not 'comparable.' The narrative also describes serious adverse events as limited to 'one appendicitis, one cholecystitis,' omitting the malignancies (2), MACE (1), and the clearly drug-associated serious infections and hepatic enzyme elevations (11 vs 3) listed in the table. The benign tone of Section 5.4 ('No new safety signals') is not supported by the tabulated imbalances in serious infection, herpes zoster, and hepatic events.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d4",
+      "category": "reporting",
+      "locationSnippet": "the proportion of participants achieving a reduction of at least 50% from baseline in the PASI score (PASI 75)",
+      "description": "Endpoint definition drift between Methods and Results. The primary endpoint is consistently defined in the Objectives and Methods (Sections 1.1, 2.3, 3.2) as a reduction of at least 75% from baseline in PASI (PASI 75). In the Results (Section 4.3), the same endpoint is described as 'a reduction of at least 50% from baseline in the PASI score (PASI 75)' -- the threshold silently drifts from 75% to 50% while keeping the 'PASI 75' label. This is an internal inconsistency in the definition of the confirmatory primary endpoint; a reader cannot tell whether the reported 64.1% reflects PASI 50 or PASI 75 responders, which materially changes interpretation of the result.",
+      "severity": "major",
+      "mustCatch": true
+    }
+  ],
+  "cleanClaims": [
+    "The sample size of 300 per group providing 90% power to detect a 25-percentage-point difference (40% vs 15%) at two-sided alpha 0.05 with 10% dropout is an internally coherent, correctly specified sample-size justification and must NOT be flagged.",
+    "Use of non-responder imputation (NRI) for the binary primary PASI 75 endpoint, with treatment discontinuations counted as non-responders, is a conventionally accepted conservative approach for binary dermatology endpoints and is NOT a defect.",
+    "The fixed-sequence hierarchical testing procedure to control the family-wise type I error rate at 0.05 for the secondary endpoints is appropriate multiplicity control and must NOT be flagged as a multiplicity error.",
+    "Randomization stratified by baseline PASI severity and prior biologic exposure, with analysis by randomized treatment, is correct ITT-consistent design and must NOT be flagged.",
+    "Participant disposition figures are internally consistent (612 randomized; 19 + 22 = 41 discontinuations; 571 completers = 93.3%) and must NOT be flagged as an arithmetic error.",
+    "The Cochran-Mantel-Haenszel test stratified by randomization strata for the binary primary endpoint is an appropriate primary analysis method and must NOT be flagged."
+  ]
+}

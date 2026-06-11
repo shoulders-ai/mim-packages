@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>References</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+      font-size: 12px;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-chrome-high);
+      color: var(--color-ink-2);
+      padding: 0 10px;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--color-rule);
+      background: var(--color-chrome-mid);
+      color: var(--color-ink);
+    }
+
+    button:disabled {
+      opacity: 0.48;
+    }
+
+    .icon-btn {
+      width: 28px;
+      padding: 0;
+    }
+
+    .primary {
+      border-color: var(--color-accent);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-weight: 650;
+    }
+
+    .primary:hover:not(:disabled) {
+      background: #ad4f31;
+      color: var(--color-accent-ink);
+    }
+
+    .ghost {
+      background: transparent;
+    }
+
+    .topbar {
+      height: 46px;
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: color-mix(in srgb, var(--color-chrome-low) 84%, var(--color-surface));
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mark {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .title-block {
+      min-width: 0;
+      display: grid;
+      gap: 1px;
+    }
+
+    .title {
+      color: var(--color-ink);
+      font-size: 13px;
+      font-weight: 720;
+      line-height: 1.2;
+    }
+
+    .path {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .segmented {
+      height: 28px;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      overflow: hidden;
+    }
+
+    .segmented button {
+      height: 26px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0 9px;
+      color: var(--color-ink-3);
+    }
+
+    .segmented button.active {
+      background: var(--color-chrome-mid);
+      color: var(--color-ink);
+      font-weight: 650;
+    }
+
+    .capture {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) auto;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-surface);
+    }
+
+    .capture-input {
+      min-width: 0;
+      height: 34px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-chrome-low);
+      color: var(--color-ink);
+      padding: 0 11px;
+      outline: none;
+    }
+
+    .capture-input:focus,
+    .search input:focus,
+    .dialog textarea:focus,
+    .dialog input:focus {
+      border-color: var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .capture-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drop-target {
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px dashed var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--color-chrome-low) 72%, transparent);
+      color: var(--color-ink-3);
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .drop-target.hot {
+      border-color: var(--color-accent);
+      background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+      color: var(--color-ink);
+    }
+
+    .shell {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(390px, 1fr) minmax(320px, 420px);
+    }
+
+    .library {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      border-right: 1px solid var(--color-rule-light);
+    }
+
+    .list-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+
+    .search {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      height: 30px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-chrome-low);
+      padding: 0 9px;
+      color: var(--color-ink-3);
+    }
+
+    .search input {
+      min-width: 0;
+      height: 26px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--color-ink);
+    }
+
+    .count {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .rows {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .row {
+      min-height: 64px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--color-rule-light);
+      padding: 10px 16px;
+      background: var(--color-surface);
+    }
+
+    .row:hover,
+    .row.active {
+      background: var(--color-chrome-low);
+    }
+
+    .row-main {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .row-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-ink-3);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .key {
+      font-family: var(--font-mono);
+      color: var(--color-accent);
+    }
+
+    .row-title {
+      min-width: 0;
+      color: var(--color-ink);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-venue {
+      min-width: 0;
+      color: var(--color-ink-3);
+      font-size: 11px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      color: var(--color-ink-3);
+      font-size: 10px;
+      padding: 0 6px;
+      white-space: nowrap;
+    }
+
+    .badge.warn {
+      border-color: color-mix(in srgb, var(--color-rem) 38%, var(--color-rule-light));
+      color: var(--color-rem);
+    }
+
+    .detail {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      background: color-mix(in srgb, var(--color-chrome-low) 60%, var(--color-surface));
+    }
+
+    .detail-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--color-rule-light);
+      display: grid;
+      gap: 8px;
+    }
+
+    .detail-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .detail-title {
+      margin: 0;
+      color: var(--color-ink);
+      font-size: 18px;
+      font-weight: 730;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    .detail-subtitle {
+      color: var(--color-ink-3);
+      line-height: 1.4;
+    }
+
+    .detail-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px 16px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .field-label {
+      color: var(--color-ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.45;
+      text-transform: uppercase;
+    }
+
+    .field-value {
+      min-width: 0;
+      color: var(--color-ink-2);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-actions {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--color-rule-light);
+      background: var(--color-surface);
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+    .empty,
+    .error {
+      padding: 22px 16px;
+      color: var(--color-ink-3);
+      line-height: 1.5;
+    }
+
+    .error {
+      color: var(--color-rem);
+    }
+
+    .toast {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      max-width: min(560px, calc(100vw - 32px));
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+      padding: 9px 11px;
+      font-size: 12px;
+      line-height: 1.35;
+      display: none;
+      z-index: 20;
+    }
+
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(29, 27, 24, 0.32);
+      z-index: 15;
+    }
+
+    .dialog {
+      width: min(620px, calc(100vw - 32px));
+      max-height: min(620px, calc(100vh - 32px));
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+    }
+
+    .dialog-head,
+    .dialog-foot {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+
+    .dialog-foot {
+      border-top: 1px solid var(--color-rule-light);
+      border-bottom: 0;
+      justify-content: end;
+    }
+
+    .dialog-title {
+      font-weight: 720;
+      color: var(--color-ink);
+    }
+
+    .dialog-body {
+      min-height: 0;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .dialog textarea {
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      box-sizing: border-box;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-chrome-low);
+      color: var(--color-ink);
+      padding: 10px;
+      outline: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .dialog input {
+      height: 30px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-chrome-low);
+      color: var(--color-ink);
+      padding: 0 10px;
+      outline: 0;
+    }
+
+    @media (max-width: 760px) {
+      .capture {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .capture-actions {
+        justify-content: space-between;
+      }
+
+      .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(260px, 1fr) minmax(240px, 0.85fr);
+      }
+
+      .library {
+        border-right: 0;
+        border-bottom: 1px solid var(--color-rule-light);
+      }
+
+      .toolbar .ghost-label {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">R</div>
+      <div class="title-block">
+        <div class="title">References</div>
+        <div class="path" id="libraryPath">references/references.bib</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="Library mode">
+        <button id="managedMode" class="active" type="button">Managed</button>
+        <button id="externalMode" type="button">External</button>
+      </div>
+      <button id="importBtn" type="button" title="Import BibTeX or CSL JSON">
+        <span aria-hidden="true">+</span><span class="ghost-label">Import</span>
+      </button>
+      <button id="refreshBtn" class="icon-btn ghost" type="button" title="Refresh">
+        <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="capture">
+    <input id="captureInput" class="capture-input" type="text" placeholder="DOI, DOI URL, or pasted citation">
+    <div class="capture-actions">
+      <div id="dropTarget" class="drop-target">PDF drop</div>
+      <button id="captureBtn" class="primary" type="button">Capture</button>
+    </div>
+  </div>
+
+  <main class="shell">
+    <section class="library">
+      <div class="list-head">
+        <label class="search">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input id="searchInput" type="search" placeholder="Search keys, authors, titles, DOI">
+        </label>
+        <div id="count" class="count">0 refs</div>
+      </div>
+      <div id="rows" class="rows">
+        <div class="empty">Loading...</div>
+      </div>
+    </section>
+
+    <aside class="detail" id="detail">
+      <div class="detail-head">
+        <div class="detail-kicker">
+          <span id="detailKey">No selection</span>
+          <span id="detailStatus"></span>
+        </div>
+        <h1 class="detail-title" id="detailTitle">Select a reference</h1>
+        <div class="detail-subtitle" id="detailSubtitle">The active library appears here when references are available.</div>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+      <div class="detail-actions">
+        <button id="openPdfBtn" type="button" disabled>Open PDF</button>
+        <button id="copyKeyBtn" type="button" disabled>Copy key</button>
+        <div class="spacer"></div>
+        <button id="openBibBtn" class="ghost" type="button">Open .bib</button>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="dialogBackdrop" class="dialog-backdrop">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-head">
+        <div class="dialog-title" id="dialogTitle">Import References</div>
+        <div class="spacer"></div>
+        <button id="dialogClose" class="icon-btn ghost" type="button" title="Close">x</button>
+      </div>
+      <div class="dialog-body" id="dialogBody"></div>
+      <div class="dialog-foot" id="dialogFoot"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { runtime } from '/sdk/mim.js'
+
+    const S = {
+      mode: { kind: 'managed', path: 'references/references.bib' },
+      rows: [],
+      activeKey: '',
+      detail: null,
+      query: '',
+      busy: false,
+    }
+
+    const els = {
+      libraryPath: document.getElementById('libraryPath'),
+      managedMode: document.getElementById('managedMode'),
+      externalMode: document.getElementById('externalMode'),
+      importBtn: document.getElementById('importBtn'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      captureInput: document.getElementById('captureInput'),
+      captureBtn: document.getElementById('captureBtn'),
+      dropTarget: document.getElementById('dropTarget'),
+      searchInput: document.getElementById('searchInput'),
+      count: document.getElementById('count'),
+      rows: document.getElementById('rows'),
+      detailKey: document.getElementById('detailKey'),
+      detailStatus: document.getElementById('detailStatus'),
+      detailTitle: document.getElementById('detailTitle'),
+      detailSubtitle: document.getElementById('detailSubtitle'),
+      detailBody: document.getElementById('detailBody'),
+      openPdfBtn: document.getElementById('openPdfBtn'),
+      copyKeyBtn: document.getElementById('copyKeyBtn'),
+      openBibBtn: document.getElementById('openBibBtn'),
+      toast: document.getElementById('toast'),
+      dialogBackdrop: document.getElementById('dialogBackdrop'),
+      dialogBody: document.getElementById('dialogBody'),
+      dialogFoot: document.getElementById('dialogFoot'),
+      dialogTitle: document.getElementById('dialogTitle'),
+      dialogClose: document.getElementById('dialogClose'),
+    }
+
+    async function load() {
+      try {
+        S.mode = await runtime.data.kv.get('mode') || { kind: 'managed', path: 'references/references.bib' }
+      } catch {
+        S.mode = { kind: 'managed', path: 'references/references.bib' }
+      }
+      await search()
+      renderShell()
+    }
+
+    async function search() {
+      const result = await runtime.call('references.search', { query: S.query, limit: 200 })
+      S.rows = result.items || []
+      if (result.mode) S.mode.kind = result.mode
+      if (result.path) S.mode.path = result.path
+      if (S.activeKey && !S.rows.some(row => row.key === S.activeKey)) {
+        S.activeKey = ''
+        S.detail = null
+      }
+    }
+
+    function renderShell() {
+      const external = S.mode.kind === 'external'
+      els.libraryPath.textContent = S.mode.path || 'references/references.bib'
+      els.managedMode.classList.toggle('active', !external)
+      els.externalMode.classList.toggle('active', external)
+      els.captureInput.disabled = external || S.busy
+      els.captureBtn.disabled = external || S.busy
+      els.dropTarget.style.opacity = external ? '0.48' : '1'
+      els.importBtn.disabled = external || S.busy
+      els.count.textContent = `${S.rows.length} ${S.rows.length === 1 ? 'ref' : 'refs'}`
+      renderRows()
+      renderDetail()
+    }
+
+    function renderRows() {
+      if (S.rows.length === 0) {
+        els.rows.innerHTML = `<div class="empty">${S.query ? 'No matching references.' : 'No references in the active library.'}</div>`
+        return
+      }
+      els.rows.innerHTML = S.rows.map(row => `
+        <div class="row ${row.key === S.activeKey ? 'active' : ''}" data-key="${escapeAttr(row.key)}">
+          <div class="row-main">
+            <div class="row-meta">
+              <span class="key">${escapeHtml(row.key)}</span>
+              <span>${escapeHtml(compactMeta(row))}</span>
+            </div>
+            <div class="row-title">${escapeHtml(row.title || row.key)}</div>
+            <div class="row-venue">${escapeHtml(row.venue || row.doi || '')}</div>
+          </div>
+          <div class="badge-row">
+            ${row.hasPdf ? '<span class="badge">PDF</span>' : ''}
+            ${row.needsReview ? '<span class="badge warn">Review</span>' : ''}
+          </div>
+        </div>
+      `).join('')
+      els.rows.querySelectorAll('.row').forEach(row => {
+        row.addEventListener('click', () => selectReference(row.dataset.key))
+      })
+    }
+
+    function renderDetail() {
+      const detail = S.detail
+      if (!detail) {
+        els.detailKey.textContent = 'No selection'
+        els.detailStatus.textContent = ''
+        els.detailTitle.textContent = 'Select a reference'
+        els.detailSubtitle.textContent = 'The active library appears here when references are available.'
+        els.detailBody.innerHTML = ''
+        els.openPdfBtn.disabled = true
+        els.copyKeyBtn.disabled = true
+        return
+      }
+      els.detailKey.textContent = detail.key
+      els.detailStatus.textContent = detail.meta?.needsReview ? 'needs review' : ''
+      els.detailTitle.textContent = detail.title || detail.key
+      els.detailSubtitle.textContent = [detail.author, detail.year, detail.venue].filter(Boolean).join(' / ')
+      els.openPdfBtn.disabled = !detail.pdfPath
+      els.copyKeyBtn.disabled = false
+      const fields = detail.fields || {}
+      els.detailBody.innerHTML = [
+        fieldRow('DOI', fields.doi),
+        fieldRow('URL', fields.url),
+        fieldRow('Journal', fields.journal || fields.booktitle),
+        fieldRow('Pages', fields.pages),
+        fieldRow('Keywords', fields.keywords),
+        fieldRow('PDF', detail.pdfPath),
+        fieldRow('Capture', captureSummary(detail.meta)),
+      ].filter(Boolean).join('')
+    }
+
+    async function selectReference(key) {
+      S.activeKey = key
+      renderRows()
+      try {
+        S.detail = await runtime.call('references.get', { key })
+      } catch (err) {
+        toast(err.message || String(err))
+      }
+      renderDetail()
+    }
+
+    async function captureInput() {
+      const text = els.captureInput.value.trim()
+      if (!text) return
+      setBusy(true)
+      try {
+        const job = looksLikeDoi(text)
+          ? await runtime.jobs.start('captureDoi', { doi: text })
+          : await runtime.jobs.start('capturePaste', { text })
+        await followJob(job.runId)
+        els.captureInput.value = ''
+        await search()
+        renderShell()
+        toast('Reference capture complete.')
+      } catch (err) {
+        toast(err.message || String(err))
+      } finally {
+        setBusy(false)
+      }
+    }
+
+    async function capturePdf(file) {
+      if (S.mode.kind === 'external') return
+      setBusy(true)
+      try {
+        const base64 = await fileToBase64(file)
+        const path = `references/pdf/_staged-${Date.now()}-${safeName(file.name || 'paper.pdf')}`
+        await runtime.call('fs.writeBytes', { path, base64 })
+        const job = await runtime.jobs.start('capturePdf', { path, move: true })
+        await followJob(job.runId)
+        await search()
+        renderShell()
+        toast('PDF captured.')
+      } catch (err) {
+        toast(err.message || String(err))
+      } finally {
+        setBusy(false)
+      }
+    }
+
+    async function followJob(runId) {
+      return new Promise((resolve, reject) => {
+        let off = null
+        const finish = (fn, value) => {
+          try { if (off) off() } catch {}
+          fn(value)
+        }
+        off = runtime.jobs.on(runId, (event) => {
+          if (event.type === 'job.done') finish(resolve, event.result)
+          if (event.type === 'job.failed') finish(reject, new Error(event.error || 'Job failed'))
+          if (event.type === 'job.cancelled') finish(reject, new Error('Job cancelled'))
+        })
+        runtime.jobs.get(runId).then((run) => {
+          if (run?.status === 'completed') finish(resolve, run.result)
+          if (run?.status === 'failed') finish(reject, new Error(run.error || 'Job failed'))
+        }).catch(() => {})
+      })
+    }
+
+    function openImportDialog() {
+      openDialog('Import References', `
+        <textarea id="importText" placeholder="@article{...}"></textarea>
+      `, [
+        buttonSpec('Cancel', closeDialog, 'ghost'),
+        buttonSpec('Import', async () => {
+          const text = document.getElementById('importText').value
+          try {
+            const result = await runtime.call('references.import', { text })
+            closeDialog()
+            await search()
+            renderShell()
+            toast(`Imported ${result.added || 0} references.`)
+          } catch (err) {
+            toast(err.message || String(err))
+          }
+        }, 'primary'),
+      ])
+    }
+
+    function openExternalDialog() {
+      openDialog('External Bibliography', `
+        <input id="externalPath" type="text" value="${escapeAttr(S.mode.path || '')}" placeholder="references/external.bib">
+      `, [
+        buttonSpec('Cancel', closeDialog, 'ghost'),
+        buttonSpec('Use External', async () => {
+          const path = document.getElementById('externalPath').value.trim()
+          try {
+            const result = await runtime.call('references.setBibliographyPath', { path })
+            await runtime.data.kv.set('mode', { kind: 'external', path: result.path || path })
+            closeDialog()
+            await load()
+          } catch (err) {
+            toast(err.message || String(err))
+          }
+        }, 'primary'),
+      ])
+    }
+
+    async function switchManaged() {
+      await runtime.data.kv.set('mode', { kind: 'managed' })
+      await load()
+    }
+
+    function openDialog(title, bodyHtml, buttons) {
+      els.dialogTitle.textContent = title
+      els.dialogBody.innerHTML = bodyHtml
+      els.dialogFoot.innerHTML = ''
+      for (const spec of buttons) {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.textContent = spec.label
+        if (spec.kind) btn.className = spec.kind
+        btn.addEventListener('click', spec.action)
+        els.dialogFoot.appendChild(btn)
+      }
+      els.dialogBackdrop.style.display = 'flex'
+    }
+
+    function closeDialog() {
+      els.dialogBackdrop.style.display = 'none'
+      els.dialogBody.innerHTML = ''
+      els.dialogFoot.innerHTML = ''
+    }
+
+    function buttonSpec(label, action, kind = '') {
+      return { label, action, kind }
+    }
+
+    function setBusy(value) {
+      S.busy = value
+      renderShell()
+    }
+
+    function fieldRow(label, value) {
+      if (!value) return ''
+      return `<div class="field"><div class="field-label">${escapeHtml(label)}</div><div class="field-value">${escapeHtml(String(value))}</div></div>`
+    }
+
+    function captureSummary(meta) {
+      if (!meta) return ''
+      return [meta.source, meta.confidence, meta.addedAt || meta.pdfAttachedAt].filter(Boolean).join(' / ')
+    }
+
+    function compactMeta(row) {
+      return [row.author, row.year].filter(Boolean).join(' / ')
+    }
+
+    function looksLikeDoi(text) {
+      return /\b10\.\d{4,9}\//i.test(text)
+    }
+
+    function safeName(name) {
+      const cleaned = String(name).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+/, '').slice(0, 80)
+      return cleaned.toLowerCase().endsWith('.pdf') ? cleaned : `${cleaned || 'paper'}.pdf`
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '')
+        reader.onerror = () => reject(reader.error || new Error('Could not read PDF'))
+        reader.readAsDataURL(file)
+      })
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/'/g, '&#39;')
+    }
+
+    let toastTimer = null
+    function toast(message) {
+      clearTimeout(toastTimer)
+      els.toast.textContent = message
+      els.toast.style.display = 'block'
+      toastTimer = setTimeout(() => { els.toast.style.display = 'none' }, 3600)
+    }
+
+    els.captureBtn.addEventListener('click', captureInput)
+    els.captureInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') captureInput()
+    })
+    els.searchInput.addEventListener('input', async () => {
+      S.query = els.searchInput.value.trim()
+      await search()
+      renderShell()
+    })
+    els.refreshBtn.addEventListener('click', load)
+    els.importBtn.addEventListener('click', openImportDialog)
+    els.managedMode.addEventListener('click', switchManaged)
+    els.externalMode.addEventListener('click', openExternalDialog)
+    els.dialogClose.addEventListener('click', closeDialog)
+    els.dialogBackdrop.addEventListener('click', (event) => {
+      if (event.target === els.dialogBackdrop) closeDialog()
+    })
+    els.openPdfBtn.addEventListener('click', () => {
+      if (S.detail?.pdfPath) runtime.call('editor.open', { path: S.detail.pdfPath }).catch(err => toast(err.message || String(err)))
+    })
+    els.openBibBtn.addEventListener('click', () => {
+      runtime.call('editor.open', { path: S.mode.path || 'references/references.bib' }).catch(err => toast(err.message || String(err)))
+    })
+    els.copyKeyBtn.addEventListener('click', () => {
+      if (!S.detail?.key) return
+      navigator.clipboard?.writeText(S.detail.key).then(() => toast('Citation key copied.')).catch(() => {})
+    })
+    els.dropTarget.addEventListener('dragover', (event) => {
+      event.preventDefault()
+      els.dropTarget.classList.add('hot')
+    })
+    els.dropTarget.addEventListener('dragleave', () => els.dropTarget.classList.remove('hot'))
+    els.dropTarget.addEventListener('drop', (event) => {
+      event.preventDefault()
+      els.dropTarget.classList.remove('hot')
+      const file = [...event.dataTransfer.files].find(item => item.type === 'application/pdf' || item.name.toLowerCase().endsWith('.pdf'))
+      if (file) capturePdf(file)
+    })
+
+    load().catch(err => {
+      els.rows.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`
+    })
+  </script>
+</body>
+</html>

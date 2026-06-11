@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>GitHub</title>
+  <style>
+    [hidden] { display: none !important; }
+    html, body { height: 100%; overflow: hidden; max-width: 100vw; }
+
+    .app { height: 100%; display: flex; flex-direction: column; }
+
+    /* ── Top bar: navigation + sync instrument ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      height: 38px;
+      padding: 0 10px 0 10px;
+      background: var(--color-chrome-high);
+      border-bottom: 1px solid var(--color-rule-light);
+      flex-shrink: 0;
+    }
+    .nav { display: flex; gap: 2px; }
+    .tab {
+      height: 26px;
+      padding: 0 11px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-ink-3);
+      white-space: nowrap;
+    }
+    .tab:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .tab.active { background: var(--color-accent-soft); color: var(--color-accent); }
+    .tab .key { font-size: 9px; color: var(--color-ink-4); margin-left: 5px; font-weight: 400; }
+    .tab.active .key { color: var(--color-accent); opacity: 0.6; }
+    .spacer { flex: 1; min-width: var(--space-sm); }
+
+    /* Sync instrument: one control, three states */
+    .sync {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 26px;
+      padding: 0 9px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--color-ink-3);
+      white-space: nowrap;
+    }
+    button.sync:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .sync .glyph { font-size: 12px; line-height: 1; }
+    .sync.done { color: var(--color-add); }
+    .sync.running { color: var(--color-ink-2); }
+    .sync-meter { width: 72px; height: 3px; background: var(--color-rule-light); border-radius: 2px; overflow: hidden; }
+    .sync-meter i { display: block; height: 100%; background: var(--color-accent); transition: width 0.3s; }
+    .sync-step { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+    .icon-btn {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 5px;
+      color: var(--color-ink-3);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .brand {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 5px;
+      color: var(--color-ink-3);
+      flex-shrink: 0;
+    }
+    .brand:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+
+    /* Hairline progress over the content while syncing */
+    .content-wrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .hairline { position: absolute; top: 0; left: 0; height: 2px; z-index: 5; background: var(--color-accent); transition: width 0.3s; pointer-events: none; }
+
+    /* ── Contextual bar: one per view ── */
+    .ctxbar {
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+    .ctx-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 4px var(--space-md);
+      flex-wrap: wrap;
+    }
+    .ctx-pills {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 26px;
+      padding: 3px var(--space-md);
+      border-top: 1px solid var(--color-line-soft);
+      flex-wrap: wrap;
+      background: var(--color-chrome-high);
+    }
+    .count-note { font-size: 10.5px; color: var(--color-ink-4); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .ctx-sep { width: 1px; height: 16px; background: var(--color-rule-light); margin: 0 2px; flex-shrink: 0; }
+
+    /* Segmented control (All/Issues/PRs, List/Board, timeframes) */
+    .seg { display: inline-flex; background: var(--color-chrome-mid); border-radius: var(--radius-sm); padding: 2px; gap: 1px; }
+    .seg-btn {
+      height: 20px;
+      padding: 0 9px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-ink-3);
+      white-space: nowrap;
+    }
+    .seg-btn:hover { color: var(--color-ink); }
+    .seg-btn.active { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    .search-box {
+      display: flex; align-items: center; gap: 5px;
+      height: 24px; padding: 0 8px;
+      border-radius: var(--radius-md);
+      background: var(--color-chrome-mid);
+      border: 1px solid transparent;
+    }
+    .search-box:focus-within { border-color: var(--color-accent); background: var(--color-surface); }
+    .search-box .glyph { font-size: 10px; color: var(--color-ink-4); }
+    .search-input { width: 150px; background: transparent; border: none; font-size: 11px; color: var(--color-ink); outline: none; padding: 0; }
+    .search-input::placeholder { color: var(--color-ink-4); }
+
+    .select {
+      font-size: 11px; color: var(--color-ink-2);
+      background: var(--color-surface); border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm); padding: 2px 6px; height: 24px; outline: none; max-width: 150px;
+    }
+    .select:focus { border-color: var(--color-accent); }
+
+    /* Combobox (searchable multi-select) */
+    .combo { position: relative; display: inline-flex; }
+    .combo-trigger {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 24px; padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px; font-weight: 500;
+      color: var(--color-ink-3);
+      border: 1px solid transparent;
+      background: transparent;
+      white-space: nowrap;
+    }
+    .combo-trigger:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .combo-trigger.has-selection { color: var(--color-accent); background: var(--color-accent-soft); }
+    .combo-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 16px; height: 15px; padding: 0 4px;
+      border-radius: 8px; font-size: 9px; font-weight: 600;
+      background: var(--color-accent); color: var(--color-accent-ink); line-height: 1;
+    }
+    .combo-trigger .arrow { font-size: 8px; opacity: 0.5; margin-left: 1px; }
+    .combo-drop, .menu-drop {
+      position: absolute; top: calc(100% + 4px); left: 0;
+      min-width: 200px; max-width: 300px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.18);
+      z-index: 50;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .menu-drop { min-width: 180px; padding: 4px; }
+    .combo-search {
+      width: 100%; border: none; border-bottom: 1px solid var(--color-rule-light);
+      background: transparent; font-size: 11px; color: var(--color-ink); padding: 7px 10px; outline: none;
+    }
+    .combo-search::placeholder { color: var(--color-ink-4); }
+    .combo-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; padding: 4px 0; }
+    .combo-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 10px; font-size: 11px; color: var(--color-ink-2);
+    }
+    .combo-opt:hover { background: var(--color-chrome-mid); }
+    .combo-opt.checked { background: var(--color-accent-soft); }
+    .combo-check {
+      width: 13px; height: 13px; border-radius: 3px;
+      border: 1.5px solid var(--color-rule);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: transparent; background: transparent;
+    }
+    .combo-opt.checked .combo-check { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .combo-opt-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .combo-opt-count { font-size: 10px; color: var(--color-ink-4); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .menu-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 9px; border-radius: var(--radius-sm);
+      font-size: 11px; color: var(--color-ink-2); white-space: nowrap;
+    }
+    .menu-item:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .menu-item.active { color: var(--color-accent); }
+    .menu-item.danger { color: var(--color-rem); }
+    .menu-sep { height: 1px; background: var(--color-rule-light); margin: 4px 2px; }
+    .menu-head { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-ink-4); padding: 4px 9px 2px; }
+
+    /* Date dropdown */
+    .date-drop {
+      position: absolute; top: calc(100% + 4px); left: 0; width: 252px;
+      background: var(--color-surface); border: 1px solid var(--color-rule);
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.18);
+      z-index: 50; padding: 10px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .date-presets { display: flex; gap: 4px; flex-wrap: wrap; }
+    .date-preset {
+      height: 22px; padding: 0 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 500; color: var(--color-ink-3);
+      border: 1px solid var(--color-rule-light); background: transparent;
+    }
+    .date-preset:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .date-preset.active { color: var(--color-accent); background: var(--color-accent-soft); border-color: var(--color-accent); }
+    .date-row { display: flex; align-items: center; gap: 6px; }
+    .date-label { font-size: 10px; color: var(--color-ink-4); width: 38px; flex-shrink: 0; }
+    .date-input {
+      flex: 1; height: 24px; font-size: 11px; color: var(--color-ink);
+      background: var(--color-surface); border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm); padding: 0 6px; outline: none;
+    }
+    .date-input:focus { border-color: var(--color-accent); }
+
+    /* Active-filter pills */
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 20px; padding: 0 4px 0 8px;
+      border-radius: 999px; font-size: 10px; color: var(--color-ink-2);
+      background: var(--color-chrome-mid); white-space: nowrap;
+    }
+    .pill:hover { background: var(--color-chrome-high); }
+    .pill-field { font-weight: 600; color: var(--color-ink-3); }
+    .pill-x {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      font-size: 11px; color: var(--color-ink-4); line-height: 1;
+    }
+    .pill-x:hover { background: var(--color-rem); color: var(--color-surface); }
+    .pills-clear { font-size: 10px; color: var(--color-ink-4); margin-left: 4px; }
+    .pills-clear:hover { color: var(--color-accent); text-decoration: underline; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 26px; padding: 0 12px;
+      border-radius: var(--radius-sm);
+      font-size: 11px; font-weight: 500; color: var(--color-ink-2);
+      border: 1px solid var(--color-rule); background: var(--color-surface); white-space: nowrap;
+    }
+    .btn:hover { background: var(--color-chrome-mid); }
+    .btn.primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .btn.primary:hover { opacity: 0.92; }
+    .btn.danger { color: var(--color-rem); }
+    .btn:disabled { opacity: 0.5; }
+
+    /* ── Content split ── */
+    .content { flex: 1; min-height: 0; display: flex; }
+    .pane { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+
+    /* ── Activity feed ── */
+    .feed { padding: 0 var(--space-md) var(--space-md); }
+    .feed-day {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--color-ink-4);
+      padding: var(--space-md) 0 4px; position: sticky; top: 0;
+      background: var(--color-surface); z-index: 2;
+    }
+    .feed-row { display: flex; gap: var(--space-sm); padding: 4px 0; font-size: 12px; align-items: baseline; border-bottom: 1px solid var(--color-line-soft); }
+    .feed-row:hover { background: var(--color-chrome-mid); }
+    .feed-time { font-family: var(--font-mono); font-size: 9.5px; color: var(--color-ink-4); width: 40px; flex-shrink: 0; }
+    .feed-glyph { width: 16px; flex-shrink: 0; font-size: 11px; text-align: center; color: var(--color-ink-3); line-height: 1.4; }
+    .feed-glyph.open { color: var(--color-add); }
+    .feed-glyph.merged { color: var(--color-accent); }
+    .feed-actor { font-weight: 600; color: var(--color-ink-2); flex-shrink: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .feed-repo { color: var(--color-ink-3); font-size: 10px; flex-shrink: 0; font-family: var(--font-mono); }
+    .feed-summary { color: var(--color-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .feed-note { font-size: 10.5px; color: var(--color-ink-4); padding: var(--space-md) 0 0; }
+
+    /* ── Work rows ── */
+    .row {
+      display: flex; align-items: center; gap: var(--space-sm);
+      padding: 6px var(--space-md);
+      border-bottom: 1px solid var(--color-line-soft);
+      min-width: 0; max-width: 100%;
+    }
+    .row:hover { background: var(--color-chrome-mid); }
+    .row.selected { background: var(--color-accent-tint); }
+    .mark { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .mark.pr { border-radius: 2px; transform: rotate(45deg); width: 7px; height: 7px; }
+    .mark.OPEN { background: var(--color-add); }
+    .mark.DRAFT { background: transparent; border: 1.5px solid var(--color-ink-4); }
+    .mark.MERGED { background: var(--color-accent); }
+    .mark.CLOSED { background: var(--color-ink-3); }
+    .row-key { font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-4); flex-shrink: 0; width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row-title { font-size: 12px; color: var(--color-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 60px; }
+    .row-labels { display: flex; gap: 4px; flex-shrink: 1; min-width: 0; overflow: hidden; }
+    .label-chip {
+      font-size: 9px; padding: 1px 6px; border-radius: 8px;
+      border: 1px solid var(--color-rule-light); color: var(--color-ink-3);
+      white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .label-chip i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .row-meta { font-size: 10px; color: var(--color-ink-4); flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .row-author { font-size: 10px; color: var(--color-ink-3); flex-shrink: 0; width: 88px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Board ── */
+    .board { display: flex; gap: var(--space-md); padding: var(--space-md); overflow-x: auto; height: 100%; align-items: flex-start; scrollbar-width: none; }
+    .board::-webkit-scrollbar { height: 0; }
+    .column { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; max-height: 100%; }
+    .column-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--color-ink-2); padding: 0 4px 8px; text-transform: capitalize; }
+    .column-head .count { font-weight: 400; color: var(--color-ink-4); font-variant-numeric: tabular-nums; }
+    .column-cards { overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px; }
+    .gcard { background: var(--color-surface); border: 1px solid var(--color-rule-light); border-radius: var(--radius-md); padding: 8px 10px; }
+    .gcard:hover { border-color: var(--color-rule); background: var(--color-chrome-high); }
+    .gcard.selected { border-color: var(--color-accent); }
+    .gcard-key { font-family: var(--font-mono); font-size: 9px; color: var(--color-ink-4); }
+    .gcard-title { font-size: 11.5px; color: var(--color-ink); margin: 2px 0 4px; }
+    .gcard-meta { font-size: 9.5px; color: var(--color-ink-4); display: flex; gap: 6px; }
+
+    /* ── People ── */
+    .people { padding: var(--space-sm) var(--space-md); }
+    .people-row {
+      display: flex; align-items: center; gap: var(--space-md);
+      padding: 8px 6px; margin: 0 -6px; border-radius: var(--radius-sm);
+      border-bottom: 1px solid var(--color-line-soft);
+    }
+    .people-row:hover { background: var(--color-chrome-mid); }
+    .monogram {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--color-accent);
+      background: var(--color-accent-soft); text-transform: uppercase;
+    }
+    .people-name { font-size: 12.5px; font-weight: 600; color: var(--color-ink); flex-shrink: 0; min-width: 120px; }
+    .people-stats { display: flex; gap: var(--space-lg); flex: 1; min-width: 0; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .stat-num { font-size: 13px; font-weight: 600; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+    .stat-num.muted { color: var(--color-ink-3); }
+    .stat-label { font-size: 9px; color: var(--color-ink-4); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; }
+    .people-meta { font-size: 10px; color: var(--color-ink-4); flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── Reports ── */
+    .reports { padding: var(--space-lg) var(--space-md); max-width: 680px; }
+    .r-block { margin-bottom: var(--space-lg); }
+    .r-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-ink-4); margin-bottom: 7px; }
+    .r-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .r-controls input[type="date"] { height: 26px; font-size: 11px; }
+    .r-controls input[type="text"] { height: 26px; font-size: 11px; flex: 1; min-width: 180px; }
+    .r-hint { font-size: 10.5px; margin-top: 6px; color: var(--color-ink-4); }
+    .r-hint.err { color: var(--color-rem); }
+    .r-eligibility { font-size: 12px; color: var(--color-ink-2); padding: 9px 11px; background: var(--color-chrome-mid); border-radius: var(--radius-sm); margin-bottom: 10px; line-height: 1.4; }
+    .r-eligibility strong { color: var(--color-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .r-eligibility.zero { color: var(--color-rem); background: rgba(192,93,60,0.06); }
+    .r-eligibility.warn { color: var(--color-ink-3); }
+    .r-model { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+    .r-model-label { font-size: 9px; color: var(--color-ink-4); text-transform: uppercase; letter-spacing: 0.04em; }
+    .r-running { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: var(--color-ink-2); height: 26px; }
+    .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .report-row {
+      display: flex; align-items: baseline; gap: var(--space-sm);
+      padding: 8px 6px; margin: 0 -6px; border-radius: var(--radius-sm);
+      border-bottom: 1px solid var(--color-line-soft);
+    }
+    .report-row:hover { background: var(--color-chrome-mid); }
+    .report-date { font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-4); flex-shrink: 0; }
+    .report-headline { font-size: 12px; color: var(--color-ink); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .report-range { font-size: 10px; color: var(--color-ink-4); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+    /* ── Detail panel ── */
+    .detail {
+      width: 336px; flex-shrink: 0;
+      border-left: 1px solid var(--color-rule-light);
+      overflow-y: auto; overscroll-behavior: contain;
+      padding: var(--space-md); background: var(--color-chrome-high);
+    }
+    .detail-top { display: flex; align-items: baseline; gap: var(--space-sm); }
+    .detail-key { font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-4); flex: 1; }
+    .detail-close { color: var(--color-ink-4); font-size: 13px; width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; }
+    .detail-close:hover { background: var(--color-chrome-mid); color: var(--color-ink); }
+    .detail-title { font-size: 14px; font-weight: 600; margin: 4px 0 8px; user-select: text; -webkit-user-select: text; }
+    .detail-state { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 500; color: var(--color-ink-2); margin-bottom: var(--space-sm); }
+    .detail-grid { display: grid; grid-template-columns: 76px 1fr; gap: 4px 8px; font-size: 11px; margin: var(--space-sm) 0; }
+    .detail-grid dt { color: var(--color-ink-4); }
+    .detail-grid dd { color: var(--color-ink-2); user-select: text; -webkit-user-select: text; }
+    .detail-body {
+      font-size: 11.5px; color: var(--color-ink-2); white-space: pre-wrap;
+      user-select: text; -webkit-user-select: text;
+      border-top: 1px solid var(--color-rule-light); padding-top: var(--space-sm);
+      margin-top: var(--space-sm); max-height: 320px; overflow-y: auto; overscroll-behavior: contain;
+    }
+    .detail-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-ink-4); padding: 12px 0 4px; }
+
+    /* ── Status footer ── */
+    .status {
+      display: flex; align-items: center; gap: 6px;
+      height: 26px; padding: 0 var(--space-md);
+      background: var(--color-chrome-high);
+      border-top: 1px solid var(--color-rule-light);
+      font-size: 10.5px; color: var(--color-ink-4);
+      flex-shrink: 0; white-space: nowrap; overflow: hidden;
+    }
+    .status .org { font-weight: 600; color: var(--color-ink-3); }
+    .status .sep { opacity: 0.6; }
+    .status .stat { font-variant-numeric: tabular-nums; }
+    .status .stale { color: var(--color-rem); }
+    .status .warn { color: var(--color-rem); }
+    .status .warn:hover { text-decoration: underline; }
+
+    /* ── Empty / setup ── */
+    .empty { display: flex; align-items: center; justify-content: center; height: 100%; padding: var(--space-lg); }
+    .setup-card { max-width: 400px; text-align: center; }
+    .setup-card h2 { font-size: 15px; margin-bottom: 6px; }
+    .setup-card p { font-size: 12px; color: var(--color-ink-3); margin-bottom: var(--space-md); }
+    .empty-stack { max-width: 440px; text-align: center; color: var(--color-ink-3); font-size: 12px; }
+    .empty-stack p { margin-bottom: var(--space-sm); }
+    .empty-quiet { color: var(--color-ink-4); font-size: 12px; text-align: center; max-width: 420px; }
+    .empty-quiet .btn { margin-top: var(--space-sm); }
+
+    /* ── Settings modal ── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(26, 26, 24, 0.25);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 48px; z-index: 10;
+    }
+    .modal {
+      width: 480px; max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain;
+      background: var(--color-surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--color-rule); padding: var(--space-lg);
+    }
+    .modal h2 { font-size: 14px; margin-bottom: var(--space-md); }
+    .field { margin-bottom: var(--space-md); }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--color-ink-2); margin-bottom: 4px; }
+    .field .hint { font-size: 10px; color: var(--color-ink-4); margin-top: 3px; }
+    .field input[type="text"], .field input[type="password"], .field input[type="number"], .field textarea, .field select { width: 100%; font-size: 12px; }
+    .field textarea { min-height: 56px; resize: vertical; }
+    .field-row { display: flex; gap: var(--space-sm); align-items: center; }
+    .field-row input { flex: 1; }
+    .token-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-ink-3); margin-bottom: 6px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot.ok { background: var(--color-add); }
+    .dot.bad { background: var(--color-ink-4); }
+    .validation { font-size: 11px; margin-top: 6px; user-select: text; -webkit-user-select: text; }
+    .validation.ok { color: var(--color-add); }
+    .validation.err { color: var(--color-rem); }
+    .modal-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; margin-top: var(--space-lg); }
+    .modal-actions .grow { flex: 1; display: flex; }
+
+    .toast {
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+      background: var(--color-ink); color: var(--color-surface);
+      font-size: 11.5px; padding: 7px 14px; border-radius: var(--radius-md);
+      z-index: 20; max-width: 70vw;
+    }
+
+    a { color: var(--color-accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @container (max-width: 640px) {
+      .ctx-controls { gap: 4px; padding: 4px 8px; }
+      .search-input { width: 90px; }
+      .select { max-width: 90px; font-size: 10px; }
+      .row { padding: 5px 8px; gap: 6px; }
+      .row-labels { display: none; }
+      .detail { max-width: 50%; }
+      .status { padding: 0 8px; font-size: 10px; }
+      .people-name { min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" id="org-link" href="https://github.com" target="_blank" rel="noreferrer" title="Open organization on GitHub" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <nav class="nav" id="nav"></nav>
+      <span class="spacer"></span>
+      <span id="sync-slot"></span>
+      <button class="icon-btn" id="btn-settings" title="GitHub Monitor settings">⚙</button>
+    </header>
+    <div class="ctxbar" id="ctxbar">
+      <div class="ctx-controls" id="ctx-controls"></div>
+      <div class="ctx-pills" id="ctx-pills" hidden></div>
+    </div>
+    <div class="content-wrap">
+      <div class="hairline" id="hairline" hidden></div>
+      <div class="content">
+        <main class="pane" id="pane" tabindex="-1"></main>
+        <aside class="detail" id="detail" hidden></aside>
+      </div>
+    </div>
+    <footer class="status" id="status"></footer>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+
+<script type="module">
+import { runtime } from '/sdk/mim.js'
+
+// ── Model ──────────────────────────────────────────────────────────────────
+//
+// Four views, each mapped to a distinct job:
+//   Activity  — "what happened recently?" (live, derived + org-feed timeline)
+//   Work      — "what's open / in flight?" (issues + PRs, list or board)
+//   People    — "who did what? how's Jane doing?" (per-contributor stats)
+//   Reports   — "write me a digest" (AI summaries)
+//
+// One topbar (nav + sync + settings). One contextual bar per view. A single
+// coherent filter model per view — no scope/state/type overlap.
+
+const VIEWS = [
+  { id: 'activity', label: 'Activity', key: '1' },
+  { id: 'work', label: 'Work', key: '2' },
+  { id: 'people', label: 'People', key: '3' },
+  { id: 'reports', label: 'Reports', key: '4' },
+]
+
+const WORK_PRESETS = [
+  { id: 'all-open', label: 'All open', apply: { type: 'all', state: ['OPEN', 'DRAFT'], datePreset: 'any', dateFrom: '', dateTo: '' } },
+  { id: 'open-issues', label: 'Open issues', apply: { type: 'issue', state: ['OPEN', 'DRAFT'], datePreset: 'any', dateFrom: '', dateTo: '' } },
+  { id: 'open-prs', label: 'Open PRs', apply: { type: 'pr', state: ['OPEN', 'DRAFT'], datePreset: 'any', dateFrom: '', dateTo: '' } },
+  { id: 'recently-closed', label: 'Recently closed', apply: { type: 'all', state: ['CLOSED', 'MERGED'], datePreset: '14d', dateFrom: '', dateTo: '' } },
+]
+
+const DATE_PRESETS = [
+  { id: 'any', label: 'Any time' },
+  { id: '7d', label: '7 days' },
+  { id: '14d', label: '14 days' },
+  { id: '30d', label: '30 days' },
+  { id: '90d', label: '90 days' },
+  { id: 'custom', label: 'Custom…' },
+]
+
+const ACTIVITY_TYPES = [
+  { id: 'all', label: 'All' },
+  { id: 'push', label: 'Pushes' },
+  { id: 'review', label: 'Reviews' },
+  { id: 'comment', label: 'Comments' },
+  { id: 'issue', label: 'Issues' },
+  { id: 'pr', label: 'PRs' },
+  { id: 'release', label: 'Releases' },
+  { id: 'other', label: 'Other' },
+]
+
+const AUTO_SYNC_AFTER_MS = 15 * 60_000
+
+const S = {
+  items: [], events: [], repos: [],
+  settings: null, syncState: null, reports: [], savedViews: [],
+  view: 'activity',
+  work: {
+    viewId: 'all-open',
+    type: 'all', state: ['OPEN', 'DRAFT'],
+    repo: [], author: [], label: [], projectStatus: [],
+    dateField: 'updated', datePreset: 'any', dateFrom: '', dateTo: '',
+    q: '', sort: 'updated', layout: 'list', groupBy: 'state',
+  },
+  activity: { type: 'all', repo: [], author: [], q: '' },
+  people: { preset: '30d', from: '', to: '' },
+  reports_form: { range: '7d', from: '', to: '', users: [], repos: [], focus: '' },
+  selectedKey: null,
+  tokenSet: false,
+  syncing: null,
+  justSynced: false,
+
+  models: [],
+  validateToolName: null,
+  savingView: false,
+}
+
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+// ── Data loading ───────────────────────────────────────────────────────────
+
+const unwrap = (rows) => (rows || []).map((r) => (r && typeof r === 'object' && 'value' in r ? r.value : r)).filter(Boolean)
+
+async function loadAll() {
+  const [items, events, repos, settings, syncState, reports, savedViews, uiState, secretStatus] = await Promise.all([
+    runtime.data.collection('items').list(),
+    runtime.data.collection('events').list(),
+    runtime.data.collection('repos').list(),
+    runtime.data.kv.get('settings'),
+    runtime.data.kv.get('syncState'),
+    runtime.data.kv.get('reports'),
+    runtime.data.kv.get('savedViews'),
+    runtime.data.kv.get('uiState'),
+    runtime.secrets.status().catch(() => []),
+  ])
+  S.items = unwrap(items)
+  S.events = unwrap(events).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  S.repos = unwrap(repos)
+  S.settings = settings || null
+  S.syncState = syncState || null
+  S.reports = Array.isArray(reports) ? reports : []
+  S.savedViews = Array.isArray(savedViews) ? savedViews : []
+  S.tokenSet = (secretStatus || []).some((s) => s.name === 'github_token' && s.exists)
+  if (uiState && typeof uiState === 'object') hydrateUiState(uiState)
+}
+
+function hydrateUiState(u) {
+  if (typeof u.view === 'string' && VIEWS.some((v) => v.id === u.view)) S.view = u.view
+  if (u.work && typeof u.work === 'object') {
+    const w = u.work
+    Object.assign(S.work, {
+      viewId: typeof w.viewId === 'string' ? w.viewId : S.work.viewId,
+      type: w.type === 'issue' || w.type === 'pr' ? w.type : 'all',
+      state: Array.isArray(w.state) ? w.state : S.work.state,
+      repo: Array.isArray(w.repo) ? w.repo : [],
+      author: Array.isArray(w.author) ? w.author : [],
+      label: Array.isArray(w.label) ? w.label : [],
+      projectStatus: Array.isArray(w.projectStatus) ? w.projectStatus : [],
+      dateField: w.dateField === 'created' ? 'created' : 'updated',
+      datePreset: typeof w.datePreset === 'string' ? w.datePreset : 'any',
+      dateFrom: typeof w.dateFrom === 'string' ? w.dateFrom : '',
+      dateTo: typeof w.dateTo === 'string' ? w.dateTo : '',
+      q: typeof w.q === 'string' ? w.q : '',
+      sort: ['updated', 'created', 'comments'].includes(w.sort) ? w.sort : 'updated',
+      layout: w.layout === 'board' ? 'board' : 'list',
+      groupBy: typeof w.groupBy === 'string' ? w.groupBy : 'state',
+    })
+  }
+  if (u.activity && typeof u.activity === 'object') {
+    const a = u.activity
+    Object.assign(S.activity, {
+      type: typeof a.type === 'string' ? a.type : 'all',
+      repo: Array.isArray(a.repo) ? a.repo : [],
+      author: Array.isArray(a.author) ? a.author : [],
+      q: typeof a.q === 'string' ? a.q : '',
+    })
+  }
+  if (u.people && typeof u.people === 'object') {
+    Object.assign(S.people, {
+      preset: typeof u.people.preset === 'string' ? u.people.preset : '30d',
+      from: typeof u.people.from === 'string' ? u.people.from : '',
+      to: typeof u.people.to === 'string' ? u.people.to : '',
+    })
+  }
+}
+
+let uiStateTimer = null
+function persistUiState() {
+  clearTimeout(uiStateTimer)
+  uiStateTimer = setTimeout(() => {
+    runtime.data.kv.set('uiState', {
+      view: S.view,
+      work: S.work,
+      activity: S.activity,
+      people: S.people,
+    }).catch(() => {})
+  }, 400)
+}
+
+async function loadAuxiliary() {
+  try {
+    const registry = await runtime.ai.registry()
+    S.models = Array.isArray(registry?.models) ? registry.models : []
+  } catch { S.models = [] }
+  try {
+    const tools = await runtime.tools.list()
+    const tool = tools.find((t) => t.packageId === 'github-monitor' && t.id === 'validateToken')
+    S.validateToolName = tool?.name || null
+  } catch { S.validateToolName = null }
+  // The Reports model picker renders from S.models; refresh it once they land.
+  if (S.view === 'reports') renderPane()
+}
+
+// ── Jobs ───────────────────────────────────────────────────────────────────
+//
+// Sync and summary feedback is driven by the global `package:job:event` stream,
+// keyed by jobId — not per-run subscriptions. This keeps the UI honest about
+// what is running regardless of who started it (auto-sync, a click, or chat)
+// and survives the "click while already running" race that previously cleared
+// the sync meter. Sync is single-concurrency; summary is parallel, so active
+// summary runs are tracked in a set.
+
+const activeSummaries = new Map() // runId -> { label }
+
+function summarizing() {
+  if (activeSummaries.size === 0) return null
+  const entries = [...activeSummaries.values()]
+  return entries[entries.length - 1]
+}
+
+function setupJobListener() {
+  runtime.on('package:job:event', (event) => {
+    if (!event || event.packageId !== 'github-monitor') return
+    if (event.jobId === 'sync') handleSyncEvent(event)
+    else if (event.jobId === 'summarize') handleSummarizeEvent(event)
+  })
+}
+
+function handleSyncEvent(event) {
+  if (event.type === 'job.started') {
+    S.syncing = { runId: event.runId, label: event.data?.label || 'Syncing', fraction: 0 }
+  } else if (event.type === 'job.step') {
+    S.syncing = S.syncing
+      ? { ...S.syncing, label: event.data?.name || S.syncing.label }
+      : { runId: event.runId, label: event.data?.name || 'Syncing', fraction: 0 }
+  } else if (event.type === 'job.progress') {
+    S.syncing = S.syncing
+      ? { ...S.syncing, fraction: event.data?.value ?? 0, label: event.data?.label || S.syncing.label }
+      : { runId: event.runId, label: event.data?.label || 'Syncing', fraction: event.data?.value ?? 0 }
+  } else if (event.type === 'job.done' || event.type === 'job.failed' || event.type === 'job.cancelled') {
+    const ours = S.syncing?.runId === event.runId || !S.syncing
+    S.syncing = null
+    if (!ours) return
+    if (event.type === 'job.failed') toast(`Sync failed: ${event.data?.error || 'unknown error'}`)
+    else if (event.type === 'job.done') { S.justSynced = true; setTimeout(() => { S.justSynced = false; renderSync() }, 2500) }
+    loadAll().then(render)
+    return
+  }
+  renderSync(); renderStatus()
+}
+
+function handleSummarizeEvent(event) {
+  if (event.type === 'job.started') {
+    activeSummaries.set(event.runId, { label: event.data?.label || 'Summarizing' })
+  } else if (event.type === 'job.step' || event.type === 'job.progress') {
+    if (activeSummaries.has(event.runId)) {
+      const cur = activeSummaries.get(event.runId)
+      activeSummaries.set(event.runId, { label: event.data?.label || event.data?.name || cur.label })
+    }
+  } else if (event.type === 'job.done' || event.type === 'job.failed' || event.type === 'job.cancelled') {
+    activeSummaries.delete(event.runId)
+    if (event.type === 'job.failed') toast(`Summary failed: ${event.data?.error || 'unknown error'}`)
+    loadAll().then(() => { if (S.view === 'reports') renderPane() })
+    return
+  }
+  if (S.view === 'reports') renderPane()
+}
+
+async function startSync(full) {
+  // A sync is already running (auto-sync, a prior click, or chat) — surface it
+  // instead of erroring on "Job already running". The global listener keeps
+  // the meter accurate.
+  if (S.syncing) { renderSync(); return }
+  try {
+    const run = await runtime.jobs.start('sync', { full: !!full }, { openWork: false })
+    if (!S.syncing) S.syncing = { runId: run.runId, label: full ? 'Full sync' : 'Syncing', fraction: 0 }
+    renderSync(); renderStatus()
+  } catch (err) {
+    if (/already running/i.test(err.message)) {
+      // A sync started between our idle check and the start call. Show a minimal
+      // syncing state; the global listener refines it from live events.
+      if (!S.syncing) S.syncing = { runId: null, label: 'Syncing', fraction: 0 }
+      renderSync()
+      return
+    }
+    toast(`Sync failed to start: ${err.message}`)
+    render()
+  }
+}
+
+async function startSummarize() {
+  if (summarizing()) return
+  const range = reportsRange()
+  if (!range) { toast('Pick a valid timeframe first.'); return }
+  const inputs = { from: range.from, to: range.to }
+  if (S.reports_form.users.length) inputs.users = [...S.reports_form.users]
+  if (S.reports_form.repos.length) inputs.repos = [...S.reports_form.repos]
+  if (S.reports_form.focus.trim()) inputs.focus = S.reports_form.focus.trim()
+  try {
+    const run = await runtime.jobs.start('summarize', inputs, { openWork: false })
+    activeSummaries.set(run.runId, { label: 'Starting' })
+    renderPane()
+  } catch (err) {
+    toast(`Summary failed to start: ${err.message}`)
+    renderPane()
+  }
+}
+
+// ── Time helpers ───────────────────────────────────────────────────────────
+
+function fmtAgo(iso) {
+  if (!iso) return 'never'
+  const sec = Math.max(0, (Date.now() - Date.parse(iso)) / 1000)
+  if (sec < 60) return 'just now'
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`
+  return `${Math.floor(sec / 86400)}d ago`
+}
+
+function isStale(iso) { return !iso || Date.now() - Date.parse(iso) > 86_400_000 }
+
+function todayISO() { return new Date().toISOString().slice(0, 10) }
+function daysAgoISO(n) { return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10) }
+
+function presetRange(preset, fromStr, toStr) {
+  const now = new Date()
+  if (preset === 'any' || !preset) return null
+  if (preset === '7d') return { from: new Date(now.getTime() - 7 * 86_400_000).toISOString(), to: now.toISOString() }
+  if (preset === '14d') return { from: new Date(now.getTime() - 14 * 86_400_000).toISOString(), to: now.toISOString() }
+  if (preset === '30d') return { from: new Date(now.getTime() - 30 * 86_400_000).toISOString(), to: now.toISOString() }
+  if (preset === '90d') return { from: new Date(now.getTime() - 90 * 86_400_000).toISOString(), to: now.toISOString() }
+  if (preset === 'custom') {
+    if (!fromStr || !toStr) return null
+    const from = new Date(`${fromStr}T00:00:00`)
+    const to = new Date(`${toStr}T23:59:59`)
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) return null
+    return { from: from.toISOString(), to: to.toISOString() }
+  }
+  return null
+}
+
+function fmtDateShort(iso) {
+  if (!iso) return ''
+  const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function fmtDay(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// ── Derived data ───────────────────────────────────────────────────────────
+
+function displayState(item) {
+  if (item.mergedAt || item.state === 'MERGED') return 'MERGED'
+  return item.state || 'OPEN'
+}
+
+function uniqueSorted(values) { return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b)) }
+
+function allPeople() {
+  return uniqueSorted([
+    ...S.items.flatMap((i) => [i.author, ...(i.assignees || [])]),
+    ...S.events.map((e) => e.actor),
+  ])
+}
+
+function repoShortName(repo) { return repo && repo.includes('/') ? repo.split('/').pop() : repo || '' }
+
+// Unified activity timeline: org-feed events + derived item lifecycle.
+// Derived open events fill history the org feed no longer covers (the feed
+// only retains ~300 recent events). Open events are de-duplicated against
+// feed Issues/PullRequest "opened" actions so each opening shows once.
+function buildActivityFeed() {
+  const openedCovered = new Set()
+  for (const e of S.events) {
+    const p = e.payload || {}
+    const num = p.issue?.number ?? p.pull_request?.number
+    if (num && (e.type === 'IssuesEvent' || e.type === 'PullRequestEvent') && /open/i.test(p.action || '')) {
+      openedCovered.add(`${e.repo}#${num}`)
+    }
+  }
+  const entries = []
+  for (const e of S.events) {
+    entries.push({ ts: e.createdAt, actor: e.actor, repo: e.repo, kind: 'feed', event: e })
+  }
+  for (const item of S.items) {
+    if (item.createdAt && !openedCovered.has(item.key)) {
+      entries.push({ ts: item.createdAt, actor: item.author, repo: item.repo, kind: 'opened', item })
+    }
+  }
+  return entries.filter((e) => e.ts).sort((a, b) => (a.ts < b.ts ? 1 : -1))
+}
+
+function activityCategory(entry) {
+  if (entry.kind === 'opened') return entry.item.type === 'pr' ? 'pr' : 'issue'
+  const t = entry.event.type
+  if (t === 'PushEvent') return 'push'
+  if (t === 'PullRequestReviewEvent' || t === 'PullRequestReviewCommentEvent') return 'review'
+  if (t === 'IssueCommentEvent') return 'comment'
+  if (t === 'IssuesEvent') return 'issue'
+  if (t === 'PullRequestEvent') return 'pr'
+  if (t === 'ReleaseEvent') return 'release'
+  return 'other'
+}
+
+function activityGlyph(entry) {
+  const cat = activityCategory(entry)
+  if (entry.kind === 'opened') return { ch: '+', cls: 'open' }
+  if (cat === 'push') return { ch: '↑', cls: '' }
+  if (cat === 'review') return { ch: '✓', cls: '' }
+  if (cat === 'comment') return { ch: '·', cls: '' }
+  if (cat === 'release') return { ch: '★', cls: 'merged' }
+  if (cat === 'issue') return { ch: '●', cls: '' }
+  if (cat === 'pr') return { ch: '◆', cls: entry.event.type === 'PullRequestEvent' && /merg/i.test(entry.event.summary || '') ? 'merged' : '' }
+  return { ch: '·', cls: '' }
+}
+
+function activitySummary(entry) {
+  if (entry.kind === 'opened') {
+    const t = entry.item.type === 'pr' ? 'PR' : 'issue'
+    return `opened ${t} #${entry.item.number}: ${entry.item.title}`
+  }
+  return entry.event.summary || entry.event.type.replace(/Event$/, '')
+}
+
+function viewActivity() {
+  let entries = buildActivityFeed()
+  const f = S.activity
+  if (f.type !== 'all') entries = entries.filter((e) => activityCategory(e) === f.type)
+  if (f.repo.length) entries = entries.filter((e) => f.repo.includes(e.repo))
+  if (f.author.length) entries = entries.filter((e) => f.author.includes(e.actor))
+  if (f.q) {
+    const q = f.q.toLowerCase()
+    entries = entries.filter((e) => (e.actor || '').toLowerCase().includes(q) || (e.repo || '').toLowerCase().includes(q) || activitySummary(e).toLowerCase().includes(q))
+  }
+  return entries
+}
+
+// Per-contributor stats over a range, from items (author) + events (actor).
+function peopleStats(from, to) {
+  const stats = new Map()
+  const ensure = (login) => {
+    if (!login) return null
+    if (!stats.has(login)) stats.set(login, {
+      login, openedIssues: 0, openedPRs: 0, mergedPRs: 0, closedIssues: 0,
+      pushes: 0, reviews: 0, comments: 0, releases: 0, events: 0,
+      repos: new Set(), lastActive: '',
+    })
+    return stats.get(login)
+  }
+  const inRange = (iso) => iso && iso >= from && iso <= to
+  const touch = (s, iso, repo) => { if (iso > s.lastActive) s.lastActive = iso; if (repo) s.repos.add(repo) }
+
+  for (const item of S.items) {
+    const s = ensure(item.author); if (!s) continue
+    if (inRange(item.createdAt)) { if (item.type === 'pr') s.openedPRs++; else s.openedIssues++; touch(s, item.createdAt, item.repo) }
+    if (item.mergedAt && inRange(item.mergedAt)) { s.mergedPRs++; touch(s, item.mergedAt, item.repo) }
+    else if (item.closedAt && inRange(item.closedAt)) { if (item.type === 'issue') s.closedIssues++; touch(s, item.closedAt, item.repo) }
+  }
+  for (const e of S.events) {
+    if (!inRange(e.createdAt)) continue
+    const s = ensure(e.actor); if (!s) continue
+    s.events++
+    if (e.type === 'PushEvent') s.pushes++
+    else if (e.type === 'PullRequestReviewEvent' || e.type === 'PullRequestReviewCommentEvent') s.reviews++
+    else if (e.type === 'IssueCommentEvent') s.comments++
+    else if (e.type === 'ReleaseEvent') s.releases++
+    touch(s, e.createdAt, e.repo)
+  }
+  const score = (s) => s.openedIssues + s.openedPRs + s.mergedPRs + s.closedIssues + s.events
+  return [...stats.values()].filter((s) => score(s) > 0).sort((a, b) => score(b) - score(a))
+}
+
+// ── Work filtering ─────────────────────────────────────────────────────────
+
+function workDateRange() { return presetRange(S.work.datePreset, S.work.dateFrom, S.work.dateTo) }
+
+function workItems() {
+  const f = S.work
+  let rows = S.items
+  if (f.type === 'issue') rows = rows.filter((i) => i.type === 'issue')
+  else if (f.type === 'pr') rows = rows.filter((i) => i.type === 'pr')
+  if (f.state.length) rows = rows.filter((i) => f.state.includes(displayState(i)))
+  if (f.repo.length) rows = rows.filter((i) => f.repo.includes(i.repo))
+  if (f.author.length) rows = rows.filter((i) => f.author.includes(i.author) || (i.assignees || []).some((a) => f.author.includes(a)))
+  if (f.label.length) rows = rows.filter((i) => (i.labels || []).some((l) => f.label.includes(l.name)))
+  if (f.projectStatus.length) rows = rows.filter((i) => f.projectStatus.includes(i.projectStatus || ''))
+  const dr = workDateRange()
+  if (dr) {
+    const key = f.dateField === 'created' ? 'createdAt' : 'updatedAt'
+    rows = rows.filter((i) => i[key] && i[key] >= dr.from && i[key] <= dr.to)
+  }
+  if (f.q) {
+    const q = f.q.toLowerCase()
+    rows = rows.filter((i) => i.title.toLowerCase().includes(q) || i.key.toLowerCase().includes(q) || (i.author || '').toLowerCase().includes(q) || (i.bodyExcerpt || '').toLowerCase().includes(q))
+  }
+  const sorters = {
+    updated: (a, b) => (a.updatedAt < b.updatedAt ? 1 : -1),
+    created: (a, b) => (a.createdAt < b.createdAt ? 1 : -1),
+    comments: (a, b) => (b.commentCount || 0) - (a.commentCount || 0),
+  }
+  return [...rows].sort(sorters[f.sort] || sorters.updated)
+}
+
+function workHasActiveFilters() {
+  const f = S.work
+  return !!(f.q || f.type !== 'all' || f.repo.length || f.author.length || f.label.length || f.projectStatus.length || f.datePreset !== 'any' || (f.state.length && (f.state.length !== 2 || !f.state.includes('OPEN') || !f.state.includes('DRAFT'))))
+}
+
+function clearWorkFilters() {
+  S.work = { viewId: 'custom', type: 'all', state: ['OPEN', 'DRAFT'], repo: [], author: [], label: [], projectStatus: [], dateField: 'updated', datePreset: 'any', dateFrom: '', dateTo: '', q: '', sort: S.work.sort, layout: S.work.layout, groupBy: S.work.groupBy }
+}
+
+function activityHasActiveFilters() {
+  const f = S.activity
+  return !!(f.q || f.type !== 'all' || f.repo.length || f.author.length)
+}
+
+function filterOptions() {
+  // Counts computed from the base set (type filter applied, nothing else).
+  const base = S.work.type === 'issue' ? S.items.filter((i) => i.type === 'issue') : S.work.type === 'pr' ? S.items.filter((i) => i.type === 'pr') : S.items
+  const countBy = (items, fn) => {
+    const counts = new Map()
+    for (const item of items) for (const val of [].concat(fn(item))) if (val) counts.set(val, (counts.get(val) || 0) + 1)
+    return counts
+  }
+  const map = (counts, short = false) => [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([v, c]) => ({ value: v, label: short ? repoShortName(v) : v, count: c }))
+  const repoCounts = countBy(base, (i) => i.repo)
+  const authorCounts = countBy(base, (i) => [i.author, ...(i.assignees || [])].filter(Boolean))
+  const labelCounts = countBy(base, (i) => (i.labels || []).map((l) => l.name))
+  const stateCounts = countBy(base, (i) => displayState(i))
+  const statusCounts = countBy(base, (i) => i.projectStatus || '')
+  return {
+    repos: map(repoCounts, true),
+    authors: map(authorCounts),
+    labels: map(labelCounts),
+    states: ['OPEN', 'DRAFT', 'MERGED', 'CLOSED'].map((s) => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase(), count: stateCounts.get(s) || 0 })),
+    statuses: map(statusCounts).filter((s) => s.value),
+  }
+}
+
+function viewLabel() {
+  if (S.work.viewId === 'custom') return 'Custom'
+  const preset = WORK_PRESETS.find((p) => p.id === S.work.viewId)
+  if (preset) return preset.label
+  if (S.work.viewId.startsWith('saved:')) {
+    const v = S.savedViews.find((sv) => `saved:${sv.id}` === S.work.viewId)
+    if (v) return v.name
+  }
+  return 'Custom'
+}
+
+function applyPreset(presetId) {
+  const preset = WORK_PRESETS.find((p) => p.id === presetId)
+  if (!preset) return
+  S.work = { ...S.work, ...preset.apply, viewId: preset.id, repo: [], author: [], label: [], projectStatus: [], q: '' }
+  persistUiState()
+  renderCtxbar(); renderPills(); renderPane()
+}
+
+function applySavedView(id) {
+  const view = S.savedViews.find((v) => `saved:${v.id}` === id)
+  if (!view?.state) return
+  const w = view.state
+  S.work = {
+    viewId: id,
+    type: w.type === 'issue' || w.type === 'pr' ? w.type : 'all',
+    state: Array.isArray(w.state) ? w.state : ['OPEN', 'DRAFT'],
+    repo: Array.isArray(w.repo) ? w.repo : [],
+    author: Array.isArray(w.author) ? w.author : [],
+    label: Array.isArray(w.label) ? w.label : [],
+    projectStatus: Array.isArray(w.projectStatus) ? w.projectStatus : [],
+    dateField: w.dateField === 'created' ? 'created' : 'updated',
+    datePreset: typeof w.datePreset === 'string' ? w.datePreset : 'any',
+    dateFrom: typeof w.dateFrom === 'string' ? w.dateFrom : '',
+    dateTo: typeof w.dateTo === 'string' ? w.dateTo : '',
+    q: typeof w.q === 'string' ? w.q : '',
+    sort: ['updated', 'created', 'comments'].includes(w.sort) ? w.sort : 'updated',
+    layout: w.layout === 'board' ? 'board' : 'list',
+    groupBy: typeof w.groupBy === 'string' ? w.groupBy : 'state',
+  }
+  persistUiState()
+  renderCtxbar(); renderPills(); renderPane()
+}
+
+function markCustom() { if (S.work.viewId !== 'custom') S.work.viewId = 'custom' }
+
+// ── Combobox (searchable multi-select) ─────────────────────────────────────
+
+let openComboId = null
+
+function renderCombobox(id, label, options, selected) {
+  const count = selected.length
+  const showSearch = options.length > 5
+  return `<span class="combo" id="combo-${esc(id)}">
+    <button class="combo-trigger ${count ? 'has-selection' : ''}" id="combo-trigger-${esc(id)}">
+      ${esc(label)}${count ? ` <span class="combo-badge">${count}</span>` : ''}
+      <span class="arrow">▾</span>
+    </button>
+    <div class="combo-drop" id="combo-drop-${esc(id)}" ${openComboId === id ? '' : 'hidden'}>
+      ${showSearch ? `<input class="combo-search" id="combo-search-${esc(id)}" placeholder="Filter…" autocomplete="off">` : ''}
+      <div class="combo-list" id="combo-list-${esc(id)}">${renderComboOptions(options, selected)}</div>
+    </div>
+  </span>`
+}
+
+function renderComboOptions(options, selected) {
+  if (options.length === 0) return `<div class="combo-opt" style="color:var(--color-ink-4)">Nothing to show</div>`
+  return options.map((opt) => {
+    const checked = selected.includes(opt.value)
+    return `<div class="combo-opt ${checked ? 'checked' : ''}" data-value="${esc(opt.value)}">
+      <span class="combo-check">${checked ? '✓' : ''}</span>
+      <span class="combo-opt-label">${esc(opt.label)}</span>
+      <span class="combo-opt-count">${opt.count}</span>
+    </div>`
+  }).join('')
+}
+
+function bindCombobox(id, options, selected, onChange) {
+  const trigger = $(`combo-trigger-${id}`)
+  const drop = $(`combo-drop-${id}`)
+  const search = $(`combo-search-${id}`)
+  const list = $(`combo-list-${id}`)
+  if (!trigger || !drop || !list) return
+
+  trigger.addEventListener('click', (ev) => {
+    ev.stopPropagation()
+    if (openComboId === id) closeAllCombos()
+    else { closeAllCombos(); openComboId = id; drop.hidden = false; search?.focus() }
+  })
+  drop.addEventListener('click', (ev) => ev.stopPropagation())
+  if (search) {
+    search.addEventListener('input', () => {
+      const q = search.value.toLowerCase()
+      const filtered = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options
+      list.innerHTML = renderComboOptions(filtered, selected)
+      wireComboOpts(list, selected, onChange)
+    })
+    search.addEventListener('keydown', (ev) => { ev.stopPropagation(); if (ev.key === 'Escape') closeAllCombos() })
+  }
+  wireComboOpts(list, selected, onChange)
+}
+
+function wireComboOpts(list, selected, onChange) {
+  list.querySelectorAll('.combo-opt[data-value]').forEach((el) => {
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      const val = el.dataset.value
+      const idx = selected.indexOf(val)
+      if (idx >= 0) selected.splice(idx, 1); else selected.push(val)
+      onChange()
+    })
+  })
+}
+
+function closeAllCombos() {
+  if (openComboId) {
+    const drop = $(`combo-drop-${openComboId}`)
+    if (drop) drop.hidden = true
+    openComboId = null
+  }
+  for (const id of ['date-drop', 'views-drop']) { const d = $(id); if (d) d.hidden = true }
+}
+
+document.addEventListener('click', () => closeAllCombos())
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && openComboId) closeAllCombos() })
+
+// ── Date filter (Work) ─────────────────────────────────────────────────────
+
+function renderDateFilter() {
+  const f = S.work
+  const isOpen = openComboId === '_date'
+  const presetActive = f.datePreset !== 'any'
+  return `<span class="combo" id="combo-date">
+    <button class="combo-trigger ${presetActive ? 'has-selection' : ''}" id="combo-trigger-date">
+      Date${presetActive ? ` <span class="combo-badge">·</span>` : ''}
+      <span class="arrow">▾</span>
+    </button>
+    <div class="date-drop" id="date-drop" ${isOpen ? '' : 'hidden'}>
+      <div class="seg" style="align-self:flex-start">
+        <button class="seg-btn ${f.dateField === 'updated' ? 'active' : ''}" data-datefield="updated">Updated</button>
+        <button class="seg-btn ${f.dateField === 'created' ? 'active' : ''}" data-datefield="created">Created</button>
+      </div>
+      <div class="date-presets">
+        ${DATE_PRESETS.map((p) => `<button class="date-preset ${f.datePreset === p.id ? 'active' : ''}" data-datepreset="${p.id}">${p.label}</button>`).join('')}
+      </div>
+      ${f.datePreset === 'custom' ? `
+        <div class="date-row"><span class="date-label">From</span><input type="date" class="date-input" id="date-from" value="${esc(f.dateFrom)}"></div>
+        <div class="date-row"><span class="date-label">To</span><input type="date" class="date-input" id="date-to" value="${esc(f.dateTo)}"></div>` : ''}
+    </div>
+  </span>`
+}
+
+function bindDateFilter() {
+  const trigger = $('combo-trigger-date')
+  const drop = $('date-drop')
+  if (!trigger || !drop) return
+  trigger.addEventListener('click', (ev) => {
+    ev.stopPropagation()
+    if (openComboId === '_date') closeAllCombos()
+    else { closeAllCombos(); openComboId = '_date'; drop.hidden = false }
+  })
+  drop.addEventListener('click', (ev) => ev.stopPropagation())
+  drop.querySelectorAll('[data-datefield]').forEach((el) => el.addEventListener('click', () => { S.work.dateField = el.dataset.datefield; markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane() }))
+  drop.querySelectorAll('[data-datepreset]').forEach((el) => el.addEventListener('click', () => {
+    S.work.datePreset = el.dataset.datepreset
+    if (el.dataset.datepreset !== 'custom') { S.work.dateFrom = ''; S.work.dateTo = '' }
+    markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane()
+  }))
+  $('date-from')?.addEventListener('change', () => { S.work.dateFrom = $('date-from').value; markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+  $('date-to')?.addEventListener('change', () => { S.work.dateTo = $('date-to').value; markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+  $('date-from')?.addEventListener('keydown', (ev) => ev.stopPropagation())
+  $('date-to')?.addEventListener('keydown', (ev) => ev.stopPropagation())
+}
+
+// ── Views menu (Work) ──────────────────────────────────────────────────────
+
+function renderViewsMenu() {
+  const isOpen = openComboId === '_views'
+  const savedRows = S.savedViews.length
+    ? S.savedViews.map((v) => `<div class="menu-item ${S.work.viewId === `saved:${v.id}` ? 'active' : ''}" data-apply-saved="saved:${v.id}">${esc(v.name)}<span class="combo-opt-count" style="margin-left:auto" data-del-view="${v.id}" title="Delete view">×</span></div>`).join('')
+    : `<div class="menu-item" style="color:var(--color-ink-4)">No saved views yet</div>`
+  const saveRow = S.savingView
+    ? `<div class="menu-item" style="gap:6px"><input type="text" id="save-view-name" placeholder="View name" maxlength="40" style="flex:1;height:22px;font-size:11px"></div>`
+    : `<div class="menu-item" data-save-view="1">+ Save current as view…</div>`
+  return `<span class="combo" id="combo-views">
+    <button class="combo-trigger" id="combo-trigger-views">★ ${esc(viewLabel())} <span class="arrow">▾</span></button>
+    <div class="menu-drop" id="views-drop" ${isOpen ? '' : 'hidden'}>
+      <div class="menu-head">Built-in</div>
+      ${WORK_PRESETS.map((p) => `<div class="menu-item ${S.work.viewId === p.id ? 'active' : ''}" data-apply-preset="${p.id}">${esc(p.label)}</div>`).join('')}
+      <div class="menu-sep"></div>
+      <div class="menu-head">Saved</div>
+      ${savedRows}
+      <div class="menu-sep"></div>
+      ${saveRow}
+    </div>
+  </span>`
+}
+
+function bindViewsMenu() {
+  const trigger = $('combo-trigger-views')
+  const drop = $('views-drop')
+  if (!trigger || !drop) return
+  trigger.addEventListener('click', (ev) => {
+    ev.stopPropagation()
+    if (openComboId === '_views') closeAllCombos()
+    else { closeAllCombos(); openComboId = '_views'; drop.hidden = false; if (S.savingView) $('save-view-name')?.focus() }
+  })
+  drop.addEventListener('click', (ev) => ev.stopPropagation())
+  drop.querySelectorAll('[data-apply-preset]').forEach((el) => el.addEventListener('click', () => applyPreset(el.dataset.applyPreset)))
+  drop.querySelectorAll('[data-apply-saved]').forEach((el) => {
+    el.addEventListener('click', (ev) => {
+      if (ev.target.dataset.delView) return
+      applySavedView(el.dataset.applySaved)
+    })
+  })
+  drop.querySelectorAll('[data-del-view]').forEach((el) => el.addEventListener('click', async (ev) => {
+    ev.stopPropagation()
+    S.savedViews = S.savedViews.filter((v) => String(v.id) !== el.dataset.delView)
+    await runtime.data.kv.set('savedViews', S.savedViews)
+    if (S.work.viewId === `saved:${el.dataset.delView}`) S.work.viewId = 'custom'
+    renderCtxbar()
+  }))
+  drop.querySelector('[data-save-view]')?.addEventListener('click', () => { S.savingView = true; renderCtxbar(); $('save-view-name')?.focus() })
+  const nameInput = $('save-view-name')
+  if (nameInput) {
+    nameInput.addEventListener('keydown', async (ev) => {
+      ev.stopPropagation()
+      if (ev.key === 'Escape') { S.savingView = false; renderCtxbar(); return }
+      if (ev.key !== 'Enter') return
+      const name = nameInput.value.trim()
+      if (!name) return
+      const id = String(Date.now())
+      S.savedViews.push({ id, name: name.slice(0, 40), state: { ...S.work, state: [...S.work.state], repo: [...S.work.repo], author: [...S.work.author], label: [...S.work.label], projectStatus: [...S.work.projectStatus] } })
+      await runtime.data.kv.set('savedViews', S.savedViews)
+      S.savingView = false
+      S.work.viewId = `saved:${id}`
+      persistUiState()
+      renderCtxbar()
+    })
+    nameInput.addEventListener('blur', () => { S.savingView = false; renderCtxbar() })
+  }
+}
+
+// ── Render: top bar ────────────────────────────────────────────────────────
+
+function renderNav() {
+  $('nav').innerHTML = VIEWS.map((v) => `
+    <button class="tab ${S.view === v.id ? 'active' : ''}" data-view="${v.id}" title="${esc(v.label)} (${v.key})">
+      ${esc(v.label)}<span class="key">${v.key}</span>
+    </button>`).join('')
+  $('nav').querySelectorAll('[data-view]').forEach((el) => {
+    el.addEventListener('click', () => {
+      if (S.view === el.dataset.view) return
+      S.view = el.dataset.view
+      S.selectedKey = null
+      persistUiState()
+      render()
+    })
+  })
+  const orgLink = $('org-link')
+  if (orgLink) {
+    const org = S.settings?.org
+    if (org) {
+      orgLink.href = `https://github.com/${encodeURIComponent(org)}`
+      orgLink.title = `Open ${org} on GitHub`
+      orgLink.hidden = false
+    } else {
+      orgLink.hidden = true
+    }
+  }
+}
+
+function renderSync() {
+  const slot = $('sync-slot')
+  const hairline = $('hairline')
+  if (S.syncing) {
+    const pct = Math.round((S.syncing.fraction || 0) * 100)
+    slot.innerHTML = `<span class="sync running"><span class="sync-meter"><i style="width:${pct}%"></i></span><span class="sync-step">${esc(S.syncing.label || 'Syncing')}</span></span>`
+    hairline.hidden = false
+    hairline.style.width = `${pct}%`
+    return
+  }
+  hairline.hidden = true
+  if (S.justSynced) { slot.innerHTML = `<span class="sync done"><span class="glyph">✓</span>Up to date</span>`; return }
+  const last = S.syncState?.lastSyncAt
+  slot.innerHTML = `<button class="sync" id="btn-sync" title="Sync now (⌥-click for a full re-sync). Last synced ${esc(fmtAgo(last))} (press s)."><span class="glyph">↻</span>Synced ${esc(fmtAgo(last))}</button>`
+  $('btn-sync')?.addEventListener('click', (ev) => startSync(ev.altKey))
+}
+
+// ── Render: contextual bar ─────────────────────────────────────────────────
+
+function renderCtxbar() {
+  const controls = $('ctx-controls')
+  if (!configured() || S.view === 'reports') { controls.innerHTML = ''; return }
+  if (S.view === 'activity') renderActivityCtxbar(controls)
+  else if (S.view === 'work') renderWorkCtxbar(controls)
+  else if (S.view === 'people') renderPeopleCtxbar(controls)
+}
+
+function option(value, label, selected) {
+  return `<option value="${esc(value)}" ${selected ? 'selected' : ''}>${esc(label)}</option>`
+}
+
+function renderActivityCtxbar(controls) {
+  const peopleOpts = allPeople().map((p) => ({ value: p, label: p, count: S.events.filter((e) => e.actor === p).length + S.items.filter((i) => i.author === p).length }))
+  const repoCounts = new Map()
+  for (const i of S.items) if (i.repo) repoCounts.set(i.repo, (repoCounts.get(i.repo) || 0) + 1)
+  for (const e of S.events) if (e.repo) repoCounts.set(e.repo, (repoCounts.get(e.repo) || 0) + 1)
+  const repoOpts = [...repoCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([v, c]) => ({ value: v, label: repoShortName(v), count: c }))
+  const count = viewActivity().length
+  controls.innerHTML = `
+    <select class="select" id="act-type" title="Activity type">
+      ${ACTIVITY_TYPES.map((t) => option(t.id, t.label, S.activity.type === t.id)).join('')}
+    </select>
+    ${renderCombobox('act-repo', 'Repo', repoOpts, S.activity.repo)}
+    ${renderCombobox('act-person', 'Person', peopleOpts, S.activity.author)}
+    <span class="ctx-sep"></span>
+    <span class="search-box"><span class="glyph">⌕</span><input class="search-input" id="act-q" placeholder="Search activity (/)" value="${esc(S.activity.q)}"></span>
+    <span class="spacer"></span>
+    <span class="count-note">${count} event${count !== 1 ? 's' : ''}</span>`
+  $('act-type').addEventListener('change', () => { S.activity.type = $('act-type').value; persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+  bindCombobox('act-repo', repoOpts, S.activity.repo, () => { persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+  bindCombobox('act-person', peopleOpts, S.activity.author, () => { persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+  const q = $('act-q')
+  q.addEventListener('input', () => { S.activity.q = q.value; persistUiState(); renderPills(); renderPane(); updateCountNote() })
+  q.addEventListener('keydown', (ev) => { ev.stopPropagation(); if (ev.key === 'Escape') { q.value = ''; S.activity.q = ''; persistUiState(); renderPills(); renderPane(); q.blur() } })
+}
+
+function renderWorkCtxbar(controls) {
+  const opts = filterOptions()
+  const shown = workItems().length
+  controls.innerHTML = `
+    <div class="seg" title="Item type">
+      <button class="seg-btn ${S.work.type === 'all' ? 'active' : ''}" data-type="all">All</button>
+      <button class="seg-btn ${S.work.type === 'issue' ? 'active' : ''}" data-type="issue">Issues</button>
+      <button class="seg-btn ${S.work.type === 'pr' ? 'active' : ''}" data-type="pr">PRs</button>
+    </div>
+    ${renderCombobox('state', 'State', opts.states, S.work.state)}
+    ${renderDateFilter()}
+    ${renderCombobox('repo', 'Repo', opts.repos, S.work.repo)}
+    ${renderCombobox('author', 'Person', opts.authors, S.work.author)}
+    ${opts.labels.length ? renderCombobox('label', 'Label', opts.labels, S.work.label) : ''}
+    ${opts.statuses.length ? renderCombobox('projectStatus', 'Project', opts.statuses, S.work.projectStatus) : ''}
+    <span class="ctx-sep"></span>
+    <span class="search-box"><span class="glyph">⌕</span><input class="search-input" id="f-q" placeholder="Search work (/)" value="${esc(S.work.q)}"></span>
+    <span class="ctx-sep"></span>
+    <select class="select" id="f-sort" title="Sort order">
+      ${option('updated', 'Updated', S.work.sort === 'updated')}
+      ${option('created', 'Created', S.work.sort === 'created')}
+      ${option('comments', 'Comments', S.work.sort === 'comments')}
+    </select>
+    <div class="seg" title="Layout">
+      <button class="seg-btn ${S.work.layout === 'list' ? 'active' : ''}" data-layout="list">List</button>
+      <button class="seg-btn ${S.work.layout === 'board' ? 'active' : ''}" data-layout="board">Board</button>
+    </div>
+    ${S.work.layout === 'board' ? `<select class="select" id="f-group" title="Group board by">
+      ${option('state', 'By state', S.work.groupBy === 'state')}
+      ${option('assignee', 'By assignee', S.work.groupBy === 'assignee')}
+      ${option('projectStatus', 'By project', S.work.groupBy === 'projectStatus')}
+    </select>` : ''}
+    ${renderViewsMenu()}
+    <span class="spacer"></span>
+    <span class="count-note">${workHasActiveFilters() ? `${shown} of ${S.items.length}` : `${shown} items`}</span>`
+
+  controls.querySelectorAll('[data-type]').forEach((el) => el.addEventListener('click', () => { S.work.type = el.dataset.type; markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane() }))
+  const onCombo = () => { markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane() }
+  bindCombobox('state', opts.states, S.work.state, onCombo)
+  bindDateFilter()
+  bindCombobox('repo', opts.repos, S.work.repo, onCombo)
+  bindCombobox('author', opts.authors, S.work.author, onCombo)
+  if (opts.labels.length) bindCombobox('label', opts.labels, S.work.label, onCombo)
+  if (opts.statuses.length) bindCombobox('projectStatus', opts.statuses, S.work.projectStatus, onCombo)
+  bindViewsMenu()
+  const q = $('f-q')
+  q.addEventListener('input', () => { S.work.q = q.value; markCustom(); persistUiState(); renderPills(); renderPane(); updateCountNote() })
+  q.addEventListener('keydown', (ev) => { ev.stopPropagation(); if (ev.key === 'Escape') { q.value = ''; S.work.q = ''; markCustom(); persistUiState(); renderPills(); renderPane(); q.blur() } })
+  $('f-sort').addEventListener('change', () => { S.work.sort = $('f-sort').value; persistUiState(); renderPane() })
+  $('f-group')?.addEventListener('change', () => { S.work.groupBy = $('f-group').value; persistUiState(); renderPane() })
+  controls.querySelectorAll('[data-layout]').forEach((el) => el.addEventListener('click', () => { S.work.layout = el.dataset.layout; persistUiState(); renderCtxbar(); renderPane() }))
+}
+
+function renderPeopleCtxbar(controls) {
+  const range = peopleRange()
+  const valid = S.people.preset !== 'custom' || (range && true)
+  const rangeLabel = range ? `${fmtDay(range.from)}–${fmtDay(range.to)}` : ''
+  controls.innerHTML = `
+    <div class="seg" title="Timeframe">
+      <button class="seg-btn ${S.people.preset === '7d' ? 'active' : ''}" data-preset="7d">7d</button>
+      <button class="seg-btn ${S.people.preset === '30d' ? 'active' : ''}" data-preset="30d">30d</button>
+      <button class="seg-btn ${S.people.preset === '90d' ? 'active' : ''}" data-preset="90d">90d</button>
+      <button class="seg-btn ${S.people.preset === 'custom' ? 'active' : ''}" data-preset="custom">Custom</button>
+    </div>
+    ${S.people.preset === 'custom' ? `
+      <input type="date" class="date-input" id="people-from" value="${esc(S.people.from)}" style="height:24px;width:auto">
+      <span style="color:var(--color-ink-4);font-size:11px">to</span>
+      <input type="date" class="date-input" id="people-to" value="${esc(S.people.to)}" style="height:24px;width:auto">` : ''}
+    <span class="spacer"></span>
+    <span class="count-note">${valid ? `${peopleStats(range.from, range.to).length} people · ${esc(rangeLabel)}` : 'pick dates'}</span>`
+  controls.querySelectorAll('[data-preset]').forEach((el) => el.addEventListener('click', () => { S.people.preset = el.dataset.preset; persistUiState(); renderCtxbar(); renderPane() }))
+  $('people-from')?.addEventListener('change', () => { S.people.from = $('people-from').value; persistUiState(); renderPane(); renderCtxbar() })
+  $('people-to')?.addEventListener('change', () => { S.people.to = $('people-to').value; persistUiState(); renderPane(); renderCtxbar() })
+}
+
+function updateCountNote() {
+  const note = $('ctx-controls')?.querySelector('.count-note')
+  if (!note) return
+  if (S.view === 'work') {
+    const shown = workItems().length
+    note.textContent = workHasActiveFilters() ? `${shown} of ${S.items.length}` : `${shown} items`
+  } else if (S.view === 'activity') {
+    note.textContent = `${viewActivity().length} events`
+  }
+}
+
+// ── Render: active filter pills ────────────────────────────────────────────
+
+function renderPills() {
+  const bar = $('ctx-pills')
+  if (!bar) return
+  if (!configured() || S.view === 'reports' || S.view === 'people') { bar.hidden = true; return }
+  let pills = []
+  if (S.view === 'work') pills = workPills()
+  else if (S.view === 'activity') pills = activityPills()
+  if (pills.length === 0) { bar.hidden = true; return }
+  bar.hidden = false
+  bar.innerHTML = pills.map((p) =>
+    `<span class="pill" data-pfield="${esc(p.field)}" data-pvalue="${esc(p.value)}">
+      <span class="pill-field">${esc(p.fieldLabel)}:</span>${esc(p.label)}
+      <span class="pill-x">×</span>
+    </span>`).join('') +
+    `<span class="pills-clear" id="pills-clear-all">Clear all</span>`
+  bar.querySelectorAll('.pill').forEach((el) => {
+    el.querySelector('.pill-x').addEventListener('click', () => {
+      const { pfield, pvalue } = el.dataset
+      if (S.view === 'work') removeWorkPill(pfield, pvalue)
+      else removeActivityPill(pfield, pvalue)
+    })
+  })
+  $('pills-clear-all')?.addEventListener('click', () => {
+    if (S.view === 'work') clearWorkFilters()
+    else S.activity = { type: 'all', repo: [], author: [], q: '' }
+    persistUiState(); renderCtxbar(); renderPills(); renderPane()
+  })
+}
+
+function workPills() {
+  const f = S.work
+  const pills = []
+  if (f.type !== 'all') pills.push({ field: 'type', value: f.type, label: f.type === 'pr' ? 'PRs' : 'Issues', fieldLabel: 'Type' })
+  for (const s of f.state) pills.push({ field: 'state', value: s, label: s.charAt(0) + s.slice(1).toLowerCase(), fieldLabel: 'State' })
+  for (const v of f.repo) pills.push({ field: 'repo', value: v, label: repoShortName(v), fieldLabel: 'Repo' })
+  for (const v of f.author) pills.push({ field: 'author', value: v, label: v, fieldLabel: 'Person' })
+  for (const v of f.label) pills.push({ field: 'label', value: v, label: v, fieldLabel: 'Label' })
+  for (const v of f.projectStatus) pills.push({ field: 'projectStatus', value: v, label: v, fieldLabel: 'Project' })
+  if (f.datePreset !== 'any') {
+    const p = DATE_PRESETS.find((d) => d.id === f.datePreset)
+    let label = p?.label || 'Custom'
+    if (f.datePreset === 'custom' && (f.dateFrom || f.dateTo)) label = `${fmtDateShort(f.dateFrom)} – ${fmtDateShort(f.dateTo)}`
+    pills.push({ field: 'date', value: '', label: `${f.dateField === 'created' ? 'Created' : 'Updated'}: ${label}`, fieldLabel: 'Date' })
+  }
+  if (f.q) pills.push({ field: 'q', value: '', label: `"${f.q}"`, fieldLabel: 'Search' })
+  return pills
+}
+
+function removeWorkPill(field, value) {
+  const f = S.work
+  if (field === 'type') f.type = 'all'
+  else if (field === 'date') { f.datePreset = 'any'; f.dateFrom = ''; f.dateTo = '' }
+  else if (field === 'q') f.q = ''
+  else f[field] = f[field].filter((v) => v !== value)
+  markCustom(); persistUiState(); renderCtxbar(); renderPills(); renderPane()
+}
+
+function activityPills() {
+  const f = S.activity
+  const pills = []
+  if (f.type !== 'all') pills.push({ field: 'type', value: f.type, label: ACTIVITY_TYPES.find((t) => t.id === f.type)?.label || f.type, fieldLabel: 'Type' })
+  for (const v of f.repo) pills.push({ field: 'repo', value: v, label: repoShortName(v), fieldLabel: 'Repo' })
+  for (const v of f.author) pills.push({ field: 'author', value: v, label: v, fieldLabel: 'Person' })
+  if (f.q) pills.push({ field: 'q', value: '', label: `"${f.q}"`, fieldLabel: 'Search' })
+  return pills
+}
+
+function removeActivityPill(field, value) {
+  const f = S.activity
+  if (field === 'type') f.type = 'all'
+  else if (field === 'q') f.q = ''
+  else f[field] = f[field].filter((v) => v !== value)
+  persistUiState(); renderCtxbar(); renderPills(); renderPane()
+}
+
+// ── Render: status footer ──────────────────────────────────────────────────
+
+function repoTotals() {
+  return {
+    repos: S.repos.length,
+    openIssues: S.repos.reduce((sum, repo) => sum + (repo.openIssues || 0), 0),
+    openPrs: S.repos.reduce((sum, repo) => sum + (repo.openPrs || 0), 0),
+  }
+}
+
+function renderStatus() {
+  const totals = repoTotals()
+  const org = S.settings?.org
+  const last = S.syncState?.lastSyncAt
+  const errors = S.syncState?.lastSummary?.errors?.length || 0
+  $('status').innerHTML = `
+    <span class="org">${org ? esc(org) : 'Not configured'}</span>
+    ${totals.repos ? `
+      <span class="sep">·</span><span class="stat">${totals.repos} repos</span>
+      <span class="sep">·</span><span class="stat">${totals.openIssues} open issues</span>
+      <span class="sep">·</span><span class="stat">${totals.openPrs} open PRs</span>` : ''}
+    <span class="spacer" style="flex:1"></span>
+    ${errors ? `<button class="warn" id="status-errors" title="Show the last sync errors">last sync had ${errors === 1 ? 'an error' : `${errors} errors`}</button><span class="sep">·</span>` : ''}
+    <span class="${isStale(last) && configured() ? 'stale' : ''}" title="${last ? esc(new Date(last).toLocaleString()) : 'Never synced'}">synced ${esc(fmtAgo(last))}</span>`
+  $('status-errors')?.addEventListener('click', () => {
+    const errs = S.syncState?.lastSummary?.errors || []
+    toast(errs.map((e) => e.phase ? `${e.phase}: ${e.message || e}` : String(e.message || e)).join(' · ').slice(0, 300) || 'No error details recorded.')
+  })
+}
+
+// ── Render: panes ──────────────────────────────────────────────────────────
+
+function configured() { return Boolean(S.settings?.org && S.tokenSet) }
+
+function renderPane() {
+  if (!configured()) {
+    $('pane').innerHTML = `
+      <div class="empty"><div class="setup-card card">
+        <h2>Connect GitHub</h2>
+        <p>Add a GitHub token and your organization name, then run the first sync.
+           The token is stored in the system keychain and never leaves this machine
+           except to call api.github.com.</p>
+        <button class="btn primary" id="btn-setup">Open settings</button>
+      </div></div>`
+    $('btn-setup').addEventListener('click', () => openSettings())
+    $('detail').hidden = true
+    return
+  }
+  if (S.view === 'activity') renderActivity()
+  else if (S.view === 'work') { S.work.layout === 'board' ? renderBoard() : renderList() }
+  else if (S.view === 'people') renderPeople()
+  else if (S.view === 'reports') renderReports()
+  renderDetail()
+}
+
+// ── Activity ───────────────────────────────────────────────────────────────
+
+function renderActivity() {
+  const entries = viewActivity()
+  if (entries.length === 0) {
+    const hasAny = S.items.length > 0 || S.events.length > 0
+    $('pane').innerHTML = `<div class="empty"><div class="empty-quiet">
+      <p>${hasAny ? 'No activity matches the current filters.' : 'No activity synced yet.'}</p>
+      <p style="font-size:10.5px;margin-top:6px">${hasAny ? 'Try clearing filters or widening the view.' : 'Sync to load the org activity feed and recent item history.'}</p>
+      ${hasAny ? '<button class="btn" id="btn-clear-act">Clear filters</button>' : '<button class="btn primary" id="btn-sync-act">Sync now</button>'}
+    </div></div>`
+    $('btn-clear-act')?.addEventListener('click', () => { S.activity = { type: 'all', repo: [], author: [], q: '' }; persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+    $('btn-sync-act')?.addEventListener('click', () => startSync(false))
+    return
+  }
+  const byDay = new Map()
+  for (const entry of entries) {
+    const day = entry.ts.slice(0, 10)
+    if (!byDay.has(day)) byDay.set(day, [])
+    byDay.get(day).push(entry)
+  }
+  $('pane').innerHTML = `<div class="feed">${[...byDay.entries()].map(([day, dayEntries]) => `
+    <div class="feed-day">${esc(fmtDayLabel(day))}</div>
+    ${dayEntries.map((entry) => {
+      const g = activityGlyph(entry)
+      const summary = activitySummary(entry)
+      return `<div class="feed-row" ${entry.item?.url ? `data-url="${esc(entry.item.url)}"` : ''} title="${esc(summary)}">
+        <span class="feed-time">${esc(entry.ts.slice(11, 16))}</span>
+        <span class="feed-glyph ${g.cls}">${g.ch}</span>
+        <span class="feed-actor">${esc(entry.actor || '—')}</span>
+        <span class="feed-repo">${esc(repoShortName(entry.repo))}</span>
+        <span class="feed-summary">${esc(summary)}</span>
+      </div>`
+    }).join('')}`).join('')}
+    <div class="feed-note">Activity merges GitHub's org feed with derived item history. The org feed only retains the most recent ~300 events.</div>
+  </div>`
+  $('pane').querySelectorAll('[data-url]').forEach((el) => el.addEventListener('click', () => window.open(el.dataset.url, '_blank', 'noreferrer')))
+}
+
+function fmtDayLabel(day) {
+  const d = new Date(`${day}T00:00:00`)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const diff = Math.round((today - d) / 86_400_000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+// ── Work (list / board) ────────────────────────────────────────────────────
+
+function renderList() {
+  const rows = workItems()
+  if (rows.length === 0) { renderEmptyWork(); return }
+  $('pane').innerHTML = rows.map((item) => `
+    <div class="row ${S.selectedKey === item.key ? 'selected' : ''}" data-key="${esc(item.key)}">
+      ${stateMark(item)}
+      <span class="row-key">${esc(item.key)}</span>
+      <span class="row-title">${esc(item.title)}</span>
+      <span class="row-labels">${(item.labels || []).slice(0, 3).map((l) =>
+        `<span class="label-chip"><i style="background:#${esc(l.color || 'ccc')}"></i>${esc(l.name)}</span>`).join('')}</span>
+      ${item.commentCount ? `<span class="row-meta">💬 ${item.commentCount}</span>` : ''}
+      <span class="row-author">${esc(item.author)}</span>
+      <span class="row-meta" style="width:54px;text-align:right">${fmtAgo(item.updatedAt)}</span>
+    </div>`).join('')
+  $('pane').querySelectorAll('[data-key]').forEach((el) => el.addEventListener('click', () => selectItem(el.dataset.key)))
+}
+
+function renderBoard() {
+  const rows = workItems()
+  let columns
+  if (S.work.groupBy === 'assignee') {
+    const names = uniqueSorted(rows.map((i) => (i.assignees || [])[0] || ''))
+    columns = names.map((name) => ({ title: name || 'Unassigned', items: rows.filter((i) => ((i.assignees || [])[0] || '') === name) }))
+  } else if (S.work.groupBy === 'projectStatus') {
+    const statuses = uniqueSorted(rows.map((i) => i.projectStatus || ''))
+    columns = statuses.map((status) => ({ title: status || 'No status', items: rows.filter((i) => (i.projectStatus || '') === status) }))
+  } else {
+    columns = ['OPEN', 'DRAFT', 'MERGED', 'CLOSED'].map((state) => ({ title: state.toLowerCase(), items: rows.filter((i) => displayState(i) === state) }))
+  }
+  columns = columns.filter((c) => c.items.length > 0)
+  if (columns.length === 0) { renderEmptyWork(); return }
+  $('pane').innerHTML = `<div class="board">${columns.map((col) => `
+    <div class="column">
+      <div class="column-head">${esc(col.title)} <span class="count">${col.items.length}</span></div>
+      <div class="column-cards">${col.items.map((item) => `
+        <div class="gcard ${S.selectedKey === item.key ? 'selected' : ''}" data-key="${esc(item.key)}">
+          <div class="gcard-key">${esc(item.key)}</div>
+          <div class="gcard-title">${esc(item.title)}</div>
+          <div class="gcard-meta">
+            <span>${esc(item.author)}</span>
+            ${item.commentCount ? `<span>💬 ${item.commentCount}</span>` : ''}
+            <span>${fmtAgo(item.updatedAt)}</span>
+          </div>
+        </div>`).join('')}</div>
+    </div>`).join('')}</div>`
+  $('pane').querySelectorAll('[data-key]').forEach((el) => el.addEventListener('click', () => selectItem(el.dataset.key)))
+}
+
+function stateMark(item) {
+  const state = displayState(item)
+  return `<span class="mark ${esc(state)} ${item.type === 'pr' ? 'pr' : ''}" title="${esc(item.type === 'pr' ? 'PR' : 'issue')} ${esc(state.toLowerCase())}"></span>`
+}
+
+function renderEmptyWork() {
+  const totals = repoTotals()
+  if (S.items.length === 0 && totals.repos > 0) {
+    $('pane').innerHTML = `<div class="empty"><div class="empty-stack">
+      <p>No item details synced yet. The repository index is present; run a full re-sync to rebuild issue and PR details.</p>
+      <button class="btn primary" id="btn-empty-fullsync">Full re-sync</button>
+    </div></div>`
+    $('btn-empty-fullsync').addEventListener('click', () => startSync(true))
+    return
+  }
+  if (S.items.length === 0) {
+    $('pane').innerHTML = `<div class="empty"><div class="empty-quiet">
+      <p>Nothing synced yet.</p>
+      <button class="btn primary" id="btn-empty-sync">Sync now</button>
+    </div></div>`
+    $('btn-empty-sync').addEventListener('click', () => startSync(false))
+    return
+  }
+  $('pane').innerHTML = `<div class="empty"><div class="empty-quiet">
+    <p>Nothing matches.</p>
+    <button class="btn" id="btn-clear-filters">Clear filters</button>
+  </div></div>`
+  $('btn-clear-filters')?.addEventListener('click', () => { clearWorkFilters(); persistUiState(); renderCtxbar(); renderPills(); renderPane() })
+}
+
+// ── People ─────────────────────────────────────────────────────────────────
+
+function peopleRange() { return presetRange(S.people.preset, S.people.from, S.people.to) }
+
+function renderPeople() {
+  const range = peopleRange()
+  if (!range) {
+    $('pane').innerHTML = `<div class="empty"><div class="empty-quiet">
+      <p>Pick a start and end date.</p>
+    </div></div>`
+    return
+  }
+  const people = peopleStats(range.from, range.to)
+  if (people.length === 0) {
+    $('pane').innerHTML = `<div class="empty"><div class="empty-quiet">
+      <p>No contributor activity in this timeframe.</p>
+      <p style="font-size:10.5px;margin-top:6px">Sync to load recent activity, or widen the range.</p>
+    </div></div>`
+    return
+  }
+  $('pane').innerHTML = `<div class="people">${people.map((p) => `
+    <div class="people-row" data-person="${esc(p.login)}" title="See ${esc(p.login)}'s activity">
+      <span class="monogram">${esc(initials(p.login))}</span>
+      <span class="people-name">${esc(p.login)}</span>
+      <span class="people-stats">
+        <span class="stat"><span class="stat-num">${p.openedIssues}</span><span class="stat-label">Issues opened</span></span>
+        <span class="stat"><span class="stat-num">${p.openedPRs}</span><span class="stat-label">PRs opened</span></span>
+        <span class="stat"><span class="stat-num">${p.mergedPRs}</span><span class="stat-label">PRs merged</span></span>
+        <span class="stat"><span class="stat-num">${p.reviews}</span><span class="stat-label">Reviews</span></span>
+        <span class="stat"><span class="stat-num">${p.comments}</span><span class="stat-label">Comments</span></span>
+        <span class="stat"><span class="stat-num">${p.pushes}</span><span class="stat-label">Pushes</span></span>
+        <span class="stat"><span class="stat-num muted">${p.repos.size}</span><span class="stat-label">Repos</span></span>
+      </span>
+      <span class="people-meta" title="Last active ${esc(p.lastActive || '')}">active ${esc(fmtAgo(p.lastActive))}<br><span style="font-size:9px;color:var(--color-ink-4)">${esc(fmtDay(p.lastActive))}</span></span>
+    </div>`).join('')}
+    <div class="feed-note">Stats combine authored items with org-feed events. Click a person to see their activity.</div>
+  </div>`
+  $('pane').querySelectorAll('[data-person]').forEach((el) => el.addEventListener('click', () => {
+    S.view = 'activity'
+    S.activity.author = [el.dataset.person]
+    S.activity.type = 'all'
+    persistUiState()
+    render()
+  }))
+}
+
+function initials(login) {
+  if (!login) return '?'
+  const parts = login.split(/[-_]/).filter(Boolean)
+  if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return login.slice(0, 2).toUpperCase()
+}
+
+// ── Reports ────────────────────────────────────────────────────────────────
+
+function reportsRange() { return presetRange(S.reports_form.range, S.reports_form.from, S.reports_form.to) }
+
+function reportMatchCount() {
+  const range = reportsRange()
+  if (!range) return null
+  const { from, to } = range
+  const people = S.reports_form.users.length ? S.reports_form.users : null
+  const repos = S.reports_form.repos.length ? S.reports_form.repos : null
+  const matchedItems = S.items.filter((item) => {
+    if (!item.updatedAt || item.updatedAt < from || item.updatedAt > to) return false
+    if (people && !people.includes(item.author) && !(item.assignees || []).some((a) => people.includes(a))) return false
+    if (repos && !repos.includes(item.repo)) return false
+    return true
+  })
+  const matchedEvents = S.events.filter((event) => {
+    if (!event.createdAt || event.createdAt < from || event.createdAt > to) return false
+    if (people && !people.includes(event.actor)) return false
+    if (repos && !repos.includes(event.repo)) return false
+    return true
+  })
+  return { items: matchedItems.length, events: matchedEvents.length }
+}
+
+// Dependent facet counts for the Reports scope dropdowns. Each facet's per-value
+// badge reflects the OTHER active facet plus the timeframe — never its own
+// selection — so selecting repo X makes person Y's badge show Y's activity on X
+// (and vice versa). This matches the eligibility total's logic but varies one
+// facet at a time. Options with zero count (and not already selected) are
+// dropped by the caller so the list stays relevant as filters narrow.
+function reportFacetCounts(range) {
+  const people = new Map() // login -> activities involving them
+  const repos = new Map()  // repo  -> activities in it
+  if (!range) return { people, repos }
+  const { from, to } = range
+  const selRepos = S.reports_form.repos
+  const selPeople = S.reports_form.users
+  const inRange = (iso) => iso && iso >= from && iso <= to
+  // People badges reflect the selected repos; repoOk does not see selPeople.
+  const repoOk = (repo) => selRepos.length === 0 || selRepos.includes(repo)
+  // Repo badges reflect the selected people; personOk does not see selRepos.
+  const personOkItem = (item) => selPeople.length === 0 || selPeople.includes(item.author) || (item.assignees || []).some((a) => selPeople.includes(a))
+  const personOkEvent = (event) => selPeople.length === 0 || selPeople.includes(event.actor)
+
+  for (const item of S.items) {
+    if (!inRange(item.updatedAt)) continue
+    if (repoOk(item.repo)) {
+      for (const login of new Set([item.author, ...(item.assignees || [])].filter(Boolean))) {
+        people.set(login, (people.get(login) || 0) + 1)
+      }
+    }
+    if (personOkItem(item)) repos.set(item.repo, (repos.get(item.repo) || 0) + 1)
+  }
+  for (const event of S.events) {
+    if (!inRange(event.createdAt)) continue
+    if (repoOk(event.repo) && event.actor) people.set(event.actor, (people.get(event.actor) || 0) + 1)
+    if (personOkEvent(event)) repos.set(event.repo, (repos.get(event.repo) || 0) + 1)
+  }
+  return { people, repos }
+}
+
+function renderReports() {
+  const range = reportsRange()
+  const facets = reportFacetCounts(range)
+  const peopleOpts = allPeople()
+    .map((p) => ({ value: p, label: p, count: facets.people.get(p) || 0 }))
+    .filter((o) => o.count > 0 || S.reports_form.users.includes(o.value))
+  const repoOpts = uniqueSorted(S.items.map((i) => i.repo))
+    .map((r) => ({ value: r, label: repoShortName(r), count: facets.repos.get(r) || 0 }))
+    .filter((o) => o.count > 0 || S.reports_form.repos.includes(o.value))
+  const running = summarizing()
+  const customInvalid = S.reports_form.range === 'custom' && (S.reports_form.from || S.reports_form.to) && !range
+  const match = reportMatchCount()
+  const matchEmpty = match && match.items === 0 && match.events === 0
+  const total = match ? match.items + match.events : 0
+  const large = total > 1500
+  const currentModel = S.settings?.summaryModel || ''
+  const canSummarize = !!range && !matchEmpty && !running
+  const eligibility = !match
+    ? `<div class="r-eligibility warn">Pick a timeframe to see how much will be summarized.</div>`
+    : matchEmpty
+      ? `<div class="r-eligibility zero">No activity matches this scope — widen the timeframe or clear filters.</div>`
+      : `<div class="r-eligibility"><strong>${match.items}</strong> item${match.items !== 1 ? 's' : ''} · <strong>${match.events}</strong> event${match.events !== 1 ? 's' : ''} will be summarized${large ? ' · large dataset, per-repo truncation applies' : ''}</div>`
+  $('pane').innerHTML = `<div class="reports">
+    <div class="r-block">
+      <div class="r-label">Scope</div>
+      <div class="r-controls">
+        <div class="seg" title="Timeframe">
+          <button class="seg-btn ${S.reports_form.range === '7d' ? 'active' : ''}" data-range="7d">7d</button>
+          <button class="seg-btn ${S.reports_form.range === '30d' ? 'active' : ''}" data-range="30d">30d</button>
+          <button class="seg-btn ${S.reports_form.range === '90d' ? 'active' : ''}" data-range="90d">90d</button>
+          <button class="seg-btn ${S.reports_form.range === 'custom' ? 'active' : ''}" data-range="custom">Custom</button>
+        </div>
+        ${S.reports_form.range === 'custom' ? `
+          <input type="date" id="rep-from" value="${esc(S.reports_form.from)}" style="height:26px">
+          <span style="color:var(--color-ink-4);font-size:11px">to</span>
+          <input type="date" id="rep-to" value="${esc(S.reports_form.to)}" style="height:26px">` : ''}
+      </div>
+      ${customInvalid ? '<div class="r-hint err">Pick a start date that is on or before the end date.</div>' : ''}
+      <div class="r-controls" style="margin-top:8px">
+        ${renderCombobox('rep-repos', 'Repos', repoOpts, S.reports_form.repos)}
+        ${renderCombobox('rep-people', 'People', peopleOpts, S.reports_form.users)}
+      </div>
+    </div>
+
+    <div class="r-block">
+      <div class="r-label">Focus <span style="text-transform:none;font-weight:400;color:var(--color-ink-4);letter-spacing:0">— optional instruction for the summarizer</span></div>
+      <div class="r-controls">
+        <input type="text" id="rep-focus" placeholder="e.g. release readiness, blockers, who shipped what" value="${esc(S.reports_form.focus)}">
+      </div>
+    </div>
+
+    ${eligibility}
+    <div class="r-block">
+      <div class="r-controls">
+        ${running
+          ? `<span class="r-running"><span class="pulse"></span>${esc(running.label || 'Summarizing')}</span>`
+          : `<button class="btn primary" id="btn-summarize" ${canSummarize ? '' : 'disabled'} title="Reads the local cache only; writes a markdown report to reports/github/">Summarize activity</button>`}
+        <span class="r-model">
+          <span class="r-model-label">Model</span>
+          <select class="select" id="rep-model" title="Model used for summaries (blank = workspace default)">
+            ${option('', 'Workspace default', !currentModel)}
+            ${S.models.map((m) => option(m.id || m.model, m.label || m.id || m.model, currentModel === (m.id || m.model))).join('')}
+          </select>
+        </span>
+      </div>
+    </div>
+
+    <div class="r-block">
+      <div class="r-label">Past reports</div>
+      ${S.reports.length ? S.reports.map((report) => `
+        <div class="report-row" data-report="${esc(report.path)}" title="Open this report in the editor">
+          <span class="report-date">${esc((report.generatedAt || '').slice(0, 10))}</span>
+          <span class="report-headline">${esc(report.headline || report.path)}</span>
+          <span class="report-range">${esc((report.from || '').slice(0, 10))} → ${esc((report.to || '').slice(0, 10))}${report.user ? ` · ${esc(report.user)}` : ''}</span>
+        </div>`).join('')
+      : '<p style="font-size:11px;color:var(--color-ink-4)">No reports yet. Pick a timeframe and press Summarize.</p>'}
+    </div>
+  </div>`
+
+  $('pane').querySelectorAll('[data-range]').forEach((el) => el.addEventListener('click', () => { S.reports_form.range = el.dataset.range; renderPane() }))
+  $('rep-from')?.addEventListener('change', () => { S.reports_form.from = $('rep-from').value; renderPane() })
+  $('rep-to')?.addEventListener('change', () => { S.reports_form.to = $('rep-to').value; renderPane() })
+  bindCombobox('rep-repos', repoOpts, S.reports_form.repos, () => renderReports())
+  bindCombobox('rep-people', peopleOpts, S.reports_form.users, () => renderReports())
+  $('rep-focus')?.addEventListener('input', () => { S.reports_form.focus = $('rep-focus').value })
+  $('rep-focus')?.addEventListener('keydown', (ev) => ev.stopPropagation())
+  $('rep-model')?.addEventListener('change', () => saveSummaryModel($('rep-model').value))
+  $('btn-summarize')?.addEventListener('click', startSummarize)
+  $('pane').querySelectorAll('[data-report]').forEach((el) => el.addEventListener('click', () => runtime.call('editor.open', { path: el.dataset.report }).catch((err) => toast(err.message))))
+}
+
+async function saveSummaryModel(modelId) {
+  const settings = { ...(S.settings || {}), summaryModel: modelId || '' }
+  await runtime.data.kv.set('settings', settings)
+  S.settings = settings
+}
+
+// ── Detail panel ───────────────────────────────────────────────────────────
+
+function selectItem(key) {
+  S.selectedKey = S.selectedKey === key ? null : key
+  renderPane()
+}
+
+function moveSelection(delta) {
+  if (S.view !== 'work' || S.work.layout !== 'list') return
+  const rows = workItems()
+  if (!rows.length) return
+  const index = rows.findIndex((i) => i.key === S.selectedKey)
+  const next = index === -1 ? (delta > 0 ? 0 : rows.length - 1) : Math.min(rows.length - 1, Math.max(0, index + delta))
+  S.selectedKey = rows[next].key
+  renderPane()
+  $('pane').querySelector('.row.selected')?.scrollIntoView({ block: 'nearest' })
+}
+
+function renderDetail() {
+  const item = S.items.find((i) => i.key === S.selectedKey)
+  const panel = $('detail')
+  if (!item || S.view !== 'work') { panel.hidden = true; return }
+  panel.hidden = false
+  const recentEvents = S.events.filter((e) => e.repo === item.repo).slice(0, 8)
+  panel.innerHTML = `
+    <div class="detail-top">
+      <span class="detail-key">${esc(item.key)}</span>
+      <button class="detail-close" id="detail-close" title="Close (Esc)">×</button>
+    </div>
+    <div class="detail-title">${esc(item.title)}</div>
+    <div class="detail-state">${stateMark(item)} ${esc(item.type === 'pr' ? 'pull request' : 'issue')} · ${esc(displayState(item).toLowerCase())}</div>
+    <dl class="detail-grid">
+      <dt>Author</dt><dd>${esc(item.author || '—')}</dd>
+      <dt>Assignees</dt><dd>${esc((item.assignees || []).join(', ') || '—')}</dd>
+      ${item.milestone ? `<dt>Milestone</dt><dd>${esc(item.milestone)}</dd>` : ''}
+      ${item.projectStatus ? `<dt>Project</dt><dd>${esc(item.projectTitle || '')}: ${esc(item.projectStatus)}</dd>` : ''}
+      <dt>Comments</dt><dd>${item.commentCount || 0}</dd>
+      <dt>Updated</dt><dd>${fmtAgo(item.updatedAt)}</dd>
+      <dt>Created</dt><dd>${esc((item.createdAt || '').slice(0, 10))}</dd>
+      <dt>Link</dt><dd><a href="${esc(item.url)}" target="_blank" rel="noreferrer">Open on GitHub ↗</a></dd>
+    </dl>
+    ${(item.labels || []).length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0">${item.labels.map((l) =>
+      `<span class="label-chip"><i style="background:#${esc(l.color || 'ccc')}"></i>${esc(l.name)}</span>`).join('')}</div>` : ''}
+    ${item.bodyExcerpt ? `<div class="detail-body">${esc(item.bodyExcerpt)}</div>` : ''}
+    ${recentEvents.length ? `
+      <div class="detail-section">Recent repo activity</div>
+      ${recentEvents.map((e) => `
+        <div class="feed-row" style="border:none;padding:3px 0">
+          <span class="feed-time">${esc((e.createdAt || '').slice(5, 10))}</span>
+          <span class="feed-actor">${esc(e.actor)}</span>
+          <span class="feed-summary" title="${esc(e.summary)}">${esc(e.summary)}</span>
+        </div>`).join('')}` : ''}`
+  $('detail-close').addEventListener('click', () => { S.selectedKey = null; renderPane() })
+}
+
+// ── Keyboard ───────────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', (ev) => {
+  if ($('overlay')) return
+  const inField = ev.target.matches('input, textarea, select, [contenteditable]')
+  if (!inField && ev.key === '/') {
+    const q = S.view === 'work' ? $('f-q') : S.view === 'activity' ? $('act-q') : null
+    if (q) { ev.preventDefault(); q.focus(); q.select() }
+    return
+  }
+  if (inField) return
+  if (['1', '2', '3', '4'].includes(ev.key)) {
+    const v = VIEWS.find((x) => x.key === ev.key)
+    if (v && S.view !== v.id) { S.view = v.id; S.selectedKey = null; persistUiState(); render() }
+    return
+  }
+  if (ev.key === 's' && configured()) { ev.preventDefault(); startSync(ev.altKey); return }
+  if (ev.key === 'Escape') {
+    if (S.selectedKey) { S.selectedKey = null; renderPane() }
+    return
+  }
+  if (S.view === 'work') {
+    if (ev.key === 'ArrowDown' || ev.key === 'j') { ev.preventDefault(); moveSelection(1); return }
+    if (ev.key === 'ArrowUp' || ev.key === 'k') { ev.preventDefault(); moveSelection(-1); return }
+    if (ev.key === 'Enter' && S.selectedKey) {
+      const item = S.items.find((i) => i.key === S.selectedKey)
+      if (item?.url) window.open(item.url, '_blank', 'noreferrer')
+    }
+  }
+})
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+function openSettings() {
+  const s = S.settings || {}
+  const repoList = Array.isArray(s.repoList) ? s.repoList.join('\n') : ''
+  $('modal-root').innerHTML = `<div class="overlay" id="overlay"><div class="modal">
+    <h2>GitHub Monitor settings</h2>
+
+    <div class="field">
+      <label>GitHub token</label>
+      <div class="token-status">
+        <span class="dot ${S.tokenSet ? 'ok' : 'bad'}"></span>
+        ${S.tokenSet ? 'A token is stored in the system keychain.' : 'No token stored yet.'}
+      </div>
+      <div class="field-row">
+        <input type="password" id="set-token" placeholder="${S.tokenSet ? 'Paste a new token to replace it' : 'ghp_… or github_pat_…'}" autocomplete="off">
+        <button class="btn" id="btn-token-save">Save</button>
+        ${S.tokenSet ? '<button class="btn danger" id="btn-token-del">Remove</button>' : ''}
+      </div>
+      <div class="field-row" style="margin-top:6px">
+        <button class="btn" id="btn-validate" ${S.tokenSet ? '' : 'disabled'}>Validate token</button>
+        <span class="validation" id="validation"></span>
+      </div>
+      <div class="hint">Classic PAT with repo, read:org, and read:project (or project) scopes. Stored in the OS keychain, never written to files.</div>
+    </div>
+
+    <div class="field">
+      <label>Organization</label>
+      <input type="text" id="set-org" value="${esc(s.org || '')}" placeholder="my-org" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Sync window (days)</label>
+      <input type="number" id="set-window" value="${esc(s.syncWindowDays || 90)}" min="1" max="730">
+      <div class="hint">How far back recently closed items and activity are kept. Open issues and PRs are always indexed.</div>
+    </div>
+
+    <div class="field">
+      <label>Repositories</label>
+      <select class="select" id="set-repomode" style="margin-bottom:6px">
+        ${option('all', 'All repositories', !s.repoMode || s.repoMode === 'all')}
+        ${option('include', 'Only these', s.repoMode === 'include')}
+        ${option('exclude', 'All except these', s.repoMode === 'exclude')}
+      </select>
+      <textarea id="set-repolist" placeholder="one repo per line, e.g. my-org/app">${esc(repoList)}</textarea>
+    </div>
+
+    <div class="field">
+      <label>Summary model</label>
+      <select class="select" id="set-model" style="max-width:100%">
+        ${option('', 'Workspace default', !s.summaryModel)}
+        ${S.models.map((m) => option(m.id || m.model, m.label || m.id || m.model, s.summaryModel === (m.id || m.model))).join('')}
+      </select>
+      <div class="hint">Used for AI activity summaries.</div>
+    </div>
+
+    <div class="modal-actions">
+      <span class="grow"><button class="btn" id="btn-fullsync" title="Save settings, then rebuild the whole cache">Save &amp; full re-sync</button></span>
+      <button class="btn" id="btn-cancel">Cancel</button>
+      <button class="btn primary" id="btn-save">Save</button>
+    </div>
+  </div></div>`
+
+  $('overlay').addEventListener('click', (ev) => { if (ev.target.id === 'overlay') closeSettings() })
+  $('overlay').addEventListener('keydown', (ev) => { ev.stopPropagation(); if (ev.key === 'Escape') closeSettings() })
+  $('btn-cancel').addEventListener('click', closeSettings)
+  $('btn-token-save').addEventListener('click', saveToken)
+  $('btn-token-del')?.addEventListener('click', deleteToken)
+  $('btn-validate').addEventListener('click', validateToken)
+  $('btn-save').addEventListener('click', () => saveSettings(false))
+  $('btn-fullsync').addEventListener('click', () => saveSettings(true))
+}
+
+function closeSettings() { $('modal-root').innerHTML = '' }
+
+async function saveToken() {
+  const input = $('set-token')
+  const value = input.value.trim()
+  if (!value) { toast('Paste a token first.'); return }
+  try {
+    await runtime.secrets.set('github_token', value)
+    input.value = ''
+    S.tokenSet = true
+    toast('Token saved to the keychain.')
+    openSettings()
+    validateToken()
+  } catch (err) { toast(`Could not save token: ${err.message}`) }
+}
+
+async function deleteToken() {
+  try {
+    await runtime.secrets.delete('github_token')
+    S.tokenSet = false
+    toast('Token removed.')
+    openSettings()
+  } catch (err) { toast(`Could not remove token: ${err.message}`) }
+}
+
+async function validateToken() {
+  const out = $('validation')
+  if (!out) return
+  out.className = 'validation'
+  out.textContent = 'Checking…'
+  try {
+    if (!S.validateToolName) await loadAuxiliary()
+    if (!S.validateToolName) throw new Error('validateToken tool not available')
+    const result = await runtime.call('package.tools.execute', { name: S.validateToolName, input: {} })
+    const scopes = (result.scopes || '').split(',').map((s) => s.trim()).filter(Boolean)
+    const missing = [
+      hasScope(scopes, 'repo') ? null : 'repo',
+      hasScope(scopes, 'read:org', ['admin:org']) ? null : 'read:org',
+      hasScope(scopes, 'read:project', ['project']) ? null : 'read:project',
+    ].filter(Boolean)
+    out.className = 'validation ok'
+    out.textContent = `OK, authenticated as ${result.login}${scopes.length ? ` (${scopes.join(', ')})` : ''}`
+    if (missing.length && scopes.length) {
+      out.className = 'validation err'
+      out.textContent = `Authenticated as ${result.login}, but missing scopes: ${missing.join(', ')}`
+    }
+  } catch (err) {
+    out.className = 'validation err'
+    out.textContent = err.message
+  }
+}
+
+function hasScope(scopes, required, equivalents = []) {
+  return scopes.includes(required) || equivalents.some((scope) => scopes.includes(scope))
+}
+
+async function saveSettings(fullSync) {
+  const repoList = $('set-repolist').value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
+  const windowDays = parseInt($('set-window').value, 10)
+  const settings = {
+    ...(S.settings || {}),
+    org: $('set-org').value.trim(),
+    syncWindowDays: Number.isFinite(windowDays) && windowDays > 0 ? Math.min(windowDays, 730) : 90,
+    repoMode: $('set-repomode').value,
+    repoList,
+    summaryModel: $('set-model').value || '',
+  }
+  if (!settings.org) { toast('Set an organization name.'); return }
+  await runtime.data.kv.set('settings', settings)
+  S.settings = settings
+  closeSettings()
+  render()
+  if (fullSync) startSync(true)
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+
+let toastTimer = null
+function toast(message) {
+  $('toast-root').innerHTML = `<div class="toast">${esc(message)}</div>`
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { $('toast-root').innerHTML = '' }, 4000)
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+
+function render() { renderNav(); renderSync(); renderCtxbar(); renderPills(); renderPane(); renderStatus() }
+
+function maybeAutoSync() {
+  if (!configured() || S.syncing) return
+  const last = S.syncState?.lastSyncAt
+  if (!last || Date.now() - Date.parse(last) > AUTO_SYNC_AFTER_MS) startSync(false)
+}
+
+async function boot() {
+  await runtime.ready
+  $('btn-settings').addEventListener('click', () => openSettings())
+  // Register the job listener before any awaits so live job events arriving
+  // during loadAll (e.g. a sync already running when the view opened) are caught.
+  setupJobListener()
+  await loadAll()
+  render()
+  loadAuxiliary()
+  maybeAutoSync()
+  setInterval(() => { if (!S.syncing) { renderSync(); renderStatus() } }, 30_000)
+}
+
+function bootFailed(err) {
+  document.body.innerHTML = `
+    <div class="empty" style="height:100%">
+      <div class="setup-card card">
+        <h2>GitHub Monitor could not connect</h2>
+        <p style="user-select:text;-webkit-user-select:text">${esc(err.message)}</p>
+        <button class="btn primary" id="btn-retry">Retry</button>
+      </div>
+    </div>`
+  document.getElementById('btn-retry').addEventListener('click', () => location.reload())
+}
+
+boot().catch(bootFailed)
+</script>
+</body>
+</html>

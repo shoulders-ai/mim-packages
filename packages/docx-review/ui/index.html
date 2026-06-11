@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>DOCX Review</title>
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      display: grid;
+      grid-template-rows: 1fr;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+    }
+    .btn {
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 5px;
+      background: var(--color-chrome-mid);
+      color: var(--color-ink-2);
+      font: 600 11px var(--font-sans);
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) { background: var(--color-accent-tint); color: var(--color-accent); }
+    .btn:disabled { opacity: .5; }
+    .btn.primary {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+    .btn.primary:hover:not(:disabled) {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
+      filter: brightness(.94);
+      opacity: 1;
+    }
+    .shell {
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .submit-view {
+      height: 100%;
+      overflow: auto;
+      display: grid;
+      place-items: start center;
+      padding: 48px 24px 64px;
+    }
+    .center-state {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .submit-panel {
+      width: min(100%, 560px);
+      display: grid;
+      gap: 18px;
+      text-align: left;
+    }
+    .failed-panel {
+      width: min(100%, 520px);
+      display: grid;
+      gap: 16px;
+      text-align: center;
+    }
+    .processing-panel {
+      width: min(100%, 680px);
+      display: grid;
+      gap: 14px;
+      text-align: left;
+    }
+    .processing-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+    }
+    .elapsed-box {
+      min-width: 92px;
+      display: grid;
+      gap: 2px;
+      justify-items: end;
+      padding: 8px 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-chrome-high);
+    }
+    .elapsed-box span,
+    .progress-meta span,
+    .activity-head span {
+      color: var(--color-ink-4);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .elapsed-box strong {
+      color: var(--color-ink-2);
+      font: 650 16px var(--font-mono);
+      letter-spacing: 0;
+    }
+    .submit-head {
+      display: grid;
+      gap: 6px;
+    }
+    .kicker {
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: var(--color-ink);
+      font-size: 24px;
+      font-weight: 650;
+      letter-spacing: 0;
+      line-height: 1.15;
+    }
+    .lead {
+      margin: 0;
+      max-width: 520px;
+      color: var(--color-ink-3);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .review-form {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 8px;
+      background: var(--color-chrome-high);
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    .field span {
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    select {
+      width: 100%;
+      min-width: 0;
+      height: 32px;
+      border: 1px solid var(--color-rule);
+      border-radius: 5px;
+      padding: 0 8px;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font: 12px var(--font-sans);
+      outline: none;
+    }
+    select:focus { border-color: var(--color-accent); }
+    textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 92px;
+      resize: vertical;
+      border: 1px solid var(--color-rule);
+      border-radius: 5px;
+      padding: 8px;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font: 12px/1.45 var(--font-sans);
+      outline: none;
+    }
+    textarea:focus { border-color: var(--color-accent); }
+    .file-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 6px;
+      background: var(--color-surface);
+    }
+    .empty-file {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px dashed var(--color-rule);
+      border-radius: 6px;
+      background: var(--color-surface);
+      color: var(--color-ink-3);
+      font-size: 12px;
+    }
+    .file-icon { color: var(--color-accent); }
+    .file-name {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-2);
+      font-size: 12px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-meta {
+      color: var(--color-ink-4);
+      font-size: 11px;
+    }
+    .picker-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .submit-action {
+      width: 100%;
+      height: 32px;
+    }
+    .status {
+      min-height: 17px;
+      color: var(--color-ink-3);
+      font-size: 12px;
+    }
+    .status.error { color: var(--color-rem); }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto;
+      border: 2px solid var(--color-rule-light);
+      border-top-color: var(--color-accent);
+      border-radius: 999px;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-block {
+      display: grid;
+      gap: 7px;
+    }
+    .progress-meta {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-meta strong {
+      color: var(--color-ink-3);
+      font: 650 11px var(--font-mono);
+    }
+    .progress {
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--color-chrome-mid);
+    }
+    .progress span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: var(--color-accent);
+      transition: width .2s ease;
+    }
+    .stage-stepper {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .stage-step {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+      padding: 8px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-chrome-high);
+    }
+    .stage-step b {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--color-chrome-mid);
+      color: var(--color-ink-4);
+      font: 700 10px var(--font-mono);
+    }
+    .stage-step span {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-3);
+      font-size: 11px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .stage-step[data-state="active"] {
+      border-color: var(--color-accent);
+      background: var(--color-accent-tint);
+    }
+    .stage-step[data-state="active"] b {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .stage-step[data-state="done"] b {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(.92); opacity: .72; }
+    }
+    .reviewer-chips {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .reviewer-chip {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 8px minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      padding: 7px 8px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-chrome-high);
+      color: var(--color-ink-3);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .reviewer-chip i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--color-rule);
+    }
+    .reviewer-chip span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .reviewer-chip[data-state="active"] i {
+      background: var(--color-accent);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .reviewer-chip[data-state="done"] i { background: #16a34a; }
+    .reviewer-chip[data-state="error"] i { background: var(--color-rem); }
+    .activity-card {
+      min-height: 190px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 8px;
+      background: var(--color-chrome-high);
+    }
+    .activity-head {
+      min-width: 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .activity-head strong {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-2);
+      font-size: 12px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .skeleton {
+      display: grid;
+      gap: 6px;
+    }
+    .skeleton span {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--color-chrome-mid), var(--color-rule-light), var(--color-chrome-mid));
+      background-size: 220% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+    .skeleton span:nth-child(2) { width: 78%; }
+    .skeleton span:nth-child(3) { width: 54%; }
+    @keyframes shimmer {
+      0% { background-position: 120% 0; }
+      100% { background-position: -120% 0; }
+    }
+    .run-box {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 6px;
+      background: var(--color-chrome-high);
+      text-align: left;
+    }
+    .run-box code {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-3);
+      font: 11px var(--font-mono);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .event-list {
+      max-height: 138px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+    }
+    .event {
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      gap: 8px;
+      padding: 6px 8px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 5px;
+      background: var(--color-chrome-high);
+      font-size: 11px;
+    }
+    .event code {
+      color: var(--color-ink-4);
+      font: 10px var(--font-mono);
+    }
+    .event span {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-2);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .failed-details {
+      text-align: left;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-chrome-high);
+    }
+    .failed-details summary {
+      padding: 8px 10px;
+      color: var(--color-ink-3);
+      font-size: 11px;
+      font-weight: 650;
+      cursor: default;
+    }
+    .failed-details pre {
+      max-height: 220px;
+      margin: 0;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-top: 1px solid var(--color-rule-light);
+      padding: 10px;
+      color: var(--color-ink-3);
+      font: 10.5px/1.5 var(--font-mono);
+    }
+    .result-view {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 40px 1fr;
+      overflow: hidden;
+    }
+    .result-bar {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--color-rule-light);
+      background: var(--color-surface);
+    }
+    .result-title {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      color: var(--color-ink-2);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .result-path {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--color-ink-4);
+      font-weight: 500;
+      text-overflow: ellipsis;
+    }
+    .result-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .result-files {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 8px;
+      background: var(--color-chrome-high);
+    }
+    .result-files h2 {
+      margin: 0;
+      color: var(--color-ink);
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .result-file-card {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 9px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-surface);
+    }
+    .result-file-card svg { color: var(--color-accent); }
+    .result-file-title {
+      overflow: hidden;
+      color: var(--color-ink-2);
+      font-size: 12px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .result-file-path {
+      overflow: hidden;
+      color: var(--color-ink-4);
+      font: 10.5px var(--font-mono);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .result-file-note {
+      color: var(--color-ink-3);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .review-layout {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      overflow: hidden;
+    }
+    .doc-panel {
+      min-width: 0;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      background: var(--color-surface);
+    }
+    .doc-inner {
+      width: min(100%, 780px);
+      padding: 28px 34px 60px;
+    }
+    .summary {
+      display: none;
+      margin: 10px 0 24px;
+      padding: 10px 12px;
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      background: var(--color-chrome-high);
+    }
+    .summary strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--color-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .summary span {
+      color: var(--color-ink-3);
+      font-size: 12px;
+    }
+    .divider {
+      height: 1px;
+      margin: 0;
+      background: var(--color-rule-light);
+    }
+    .comment-rail {
+      min-height: 0;
+      overflow: auto;
+      border-left: 1px solid var(--color-rule-light);
+      background: var(--color-chrome);
+      padding: 10px 8px 32px;
+    }
+    .comment-rail-title {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 4px 4px 10px;
+      background: var(--color-chrome);
+      color: var(--color-ink-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .comment-card {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 8px;
+      padding: 10px;
+      border: 1px solid var(--color-rule-light);
+      border-radius: 7px;
+      background: var(--color-surface);
+      text-align: left;
+    }
+    .comment-card:hover,
+    .comment-card.active {
+      border-color: var(--color-rule);
+      background: var(--color-chrome-high);
+    }
+    .comment-meta {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-ink-4);
+      font-size: 11px;
+    }
+    .severity {
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 650;
+    }
+    .severity.major { background: #fef2f2; color: #b91c1c; }
+    .severity.minor { background: #fffbeb; color: #a16207; }
+    .severity.suggestion { background: #eff6ff; color: #1d4ed8; }
+    .comment-body {
+      color: var(--color-ink-2);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .comment-quote {
+      color: var(--color-ink-4);
+      font-size: 11px;
+      line-height: 1.4;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .review-document {
+      color: var(--color-ink-2);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .review-document h1,
+    .review-document h2,
+    .review-document h3 {
+      color: var(--color-ink);
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+    .review-document h1 { margin: 1.5em 0 .5em; font-size: 24px; }
+    .review-document h2 { margin: 1.5em 0 .5em; font-size: 20px; }
+    .review-document h3 { margin: 1.5em 0 .5em; font-size: 17px; }
+    .review-document p { margin: .75em 0; }
+    .review-document table {
+      width: 100%;
+      margin: 1em 0;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .review-document th,
+    .review-document td {
+      padding: 6px 10px;
+      border: 1px solid var(--color-rule-light);
+      text-align: left;
+    }
+    .review-document th { background: var(--color-chrome-high); font-weight: 650; }
+    .review-document img { max-width: 100%; height: auto; margin: 1em 0; border-radius: 4px; }
+    .review-document mark[data-severity="major"] {
+      background: #fef2f2;
+      border-bottom: 2px solid #fca5a5;
+      padding: 1px 0;
+    }
+    .review-document mark[data-severity="minor"] {
+      background: #fffbeb;
+      border-bottom: 2px solid #fcd34d;
+      padding: 1px 0;
+    }
+    .review-document mark[data-severity="suggestion"] {
+      background: #eff6ff;
+      border-bottom: 2px solid #93c5fd;
+      padding: 1px 0;
+    }
+    .review-document mark.active {
+      outline: 2px solid var(--color-rule);
+      outline-offset: 2px;
+    }
+    .review-report {
+      color: var(--color-ink-3);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .review-report h1,
+    .review-report h2,
+    .review-report h3 {
+      color: var(--color-ink);
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+    .review-report h1 { margin: 0 0 .75em; font-size: 20px; }
+    .review-report h2 { margin: 1.25em 0 .5em; font-size: 17px; }
+    .review-report h3 { margin: 1em 0 .5em; font-size: 15px; }
+    .review-report p { margin: .5em 0; }
+    .review-report ul { margin: .5em 0; padding-left: 1.25em; }
+    .review-report li { margin: .25em 0; }
+    [hidden] { display: none !important; }
+    @media (max-width: 880px) {
+      .processing-head,
+      .stage-stepper,
+      .reviewer-chips {
+        grid-template-columns: 1fr;
+      }
+      .elapsed-box { justify-items: start; }
+      .review-layout { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+      .comment-rail {
+        max-height: 280px;
+        border-left: none;
+        border-top: 1px solid var(--color-rule-light);
+      }
+      .doc-inner { padding: 22px 20px 42px; }
+      #cancelButton { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stage-step[data-state="active"] b,
+      .reviewer-chip[data-state="active"] i,
+      .skeleton span {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section id="submitView" class="submit-view">
+      <div class="submit-panel">
+        <div class="submit-head">
+          <h1>Peer review a Word document</h1>
+          <p class="lead">Run the specialist manuscript review workflow and create a reviewed Word copy with native comments.</p>
+        </div>
+        <div class="review-form">
+          <div id="fileRow" class="file-row" hidden>
+            <span class="file-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+            </span>
+            <div>
+              <div id="fileName" class="file-name"></div>
+              <div id="fileMeta" class="file-meta"></div>
+            </div>
+            <button id="changeFileButton" class="btn" title="Choose a different file">Change</button>
+          </div>
+          <div id="emptyFile" class="empty-file">
+            <span>No file selected.</span>
+            <button id="chooseButton" class="btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M12 4v12"/><path d="m6 10 6-6 6 6"/></svg>
+              Choose file
+            </button>
+          </div>
+          <label class="field">
+            <span>Model</span>
+            <select id="reviewModel" disabled>
+              <option>Loading models...</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Notes to review agents</span>
+            <textarea id="reviewNotes" maxlength="6000" placeholder="Optional: focus areas, context, known issues, or reviewer instructions."></textarea>
+          </label>
+          <button id="startButton" class="btn primary submit-action" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Submit for review
+          </button>
+          <div id="submitStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="processingView" class="center-state" hidden>
+      <div class="processing-panel">
+        <div class="processing-head">
+          <div>
+            <div class="kicker">Review in progress</div>
+            <h1>Your paper is being reviewed</h1>
+            <p id="processingStatus" class="lead">Starting review</p>
+          </div>
+          <div class="elapsed-box">
+            <span>Elapsed</span>
+            <strong id="elapsedTime">00:00</strong>
+          </div>
+        </div>
+        <div class="progress-block">
+          <div class="progress-meta">
+            <span>Progress</span>
+            <strong id="progressPercent">0%</strong>
+          </div>
+          <div class="progress"><span id="progressBar"></span></div>
+        </div>
+        <ol id="stageStepper" class="stage-stepper">
+          <li class="stage-step" data-stage="Extracting document" data-state="pending"><b>1</b><span>Extract</span></li>
+          <li class="stage-step" data-stage="Checking document type" data-state="pending"><b>2</b><span>Classify</span></li>
+          <li class="stage-step" data-stage="Running review agents" data-state="pending"><b>3</b><span>Review</span></li>
+          <li class="stage-step" data-stage="Reconciling review" data-state="pending"><b>4</b><span>Reconcile</span></li>
+          <li class="stage-step" data-stage="Writing Word comments" data-state="pending"><b>5</b><span>Write</span></li>
+        </ol>
+        <div id="reviewerChips" class="reviewer-chips">
+          <div class="reviewer-chip" data-reviewer="technical" data-state="pending"><i></i><span>Technical reviewer</span></div>
+          <div class="reviewer-chip" data-reviewer="editorial" data-state="pending"><i></i><span>Editorial reviewer</span></div>
+          <div class="reviewer-chip" data-reviewer="reference" data-state="pending"><i></i><span>Reference checker</span></div>
+        </div>
+        <div class="activity-card">
+          <div class="activity-head">
+            <span>Activity</span>
+            <strong id="currentActivity">Starting review</strong>
+          </div>
+          <div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div id="eventList" class="event-list"></div>
+        </div>
+        <div class="run-box">
+          <code id="runId">No run</code>
+          <button id="copyRunButton" class="btn" title="Copy run id">Copy</button>
+        </div>
+        <div class="picker-actions">
+          <button id="cancelButton" class="btn">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="failedView" class="center-state" hidden>
+      <div class="failed-panel">
+        <div>
+          <h1>Review could not be completed</h1>
+          <p id="failedMessage" class="lead">The review failed before a complete result was produced.</p>
+        </div>
+        <details id="failedDetails" class="failed-details" hidden>
+          <summary>Technical details</summary>
+          <pre id="failedDetail"></pre>
+        </details>
+        <div class="picker-actions">
+          <button id="tryAgainButton" class="btn primary">Try again</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultView" class="result-view" hidden>
+      <div class="result-bar">
+        <div class="result-title">
+          <span>AI Review Report</span>
+          <span id="resultPath" class="result-path"></span>
+        </div>
+        <div class="result-actions">
+          <button id="openReportButton" class="btn" hidden>Open report</button>
+          <button id="newReviewButton" class="btn">Submit another</button>
+        </div>
+      </div>
+      <div class="review-layout">
+        <div id="docPanel" class="doc-panel">
+          <div class="doc-inner">
+            <section id="resultFiles" class="result-files" hidden></section>
+            <div id="summary" class="summary"></div>
+            <div id="report" class="review-report"></div>
+            <div id="reportDivider" class="divider" hidden></div>
+            <div id="document" class="review-document"></div>
+          </div>
+        </div>
+        <aside id="commentRail" class="comment-rail">
+          <div id="commentRailTitle" class="comment-rail-title">Inline Comments</div>
+          <div id="comments"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { runtime } from '/sdk/mim.js'
+
+    const el = {
+      submitView: document.getElementById('submitView'),
+      processingView: document.getElementById('processingView'),
+      failedView: document.getElementById('failedView'),
+      resultView: document.getElementById('resultView'),
+      chooseButton: document.getElementById('chooseButton'),
+      startButton: document.getElementById('startButton'),
+      changeFileButton: document.getElementById('changeFileButton'),
+      fileRow: document.getElementById('fileRow'),
+      emptyFile: document.getElementById('emptyFile'),
+      fileName: document.getElementById('fileName'),
+      fileMeta: document.getElementById('fileMeta'),
+      reviewModel: document.getElementById('reviewModel'),
+      reviewNotes: document.getElementById('reviewNotes'),
+      submitStatus: document.getElementById('submitStatus'),
+      processingStatus: document.getElementById('processingStatus'),
+      elapsedTime: document.getElementById('elapsedTime'),
+      progressPercent: document.getElementById('progressPercent'),
+      progressBar: document.getElementById('progressBar'),
+      stageStepper: document.getElementById('stageStepper'),
+      reviewerChips: document.getElementById('reviewerChips'),
+      currentActivity: document.getElementById('currentActivity'),
+      runId: document.getElementById('runId'),
+      copyRunButton: document.getElementById('copyRunButton'),
+      eventList: document.getElementById('eventList'),
+      cancelButton: document.getElementById('cancelButton'),
+      failedMessage: document.getElementById('failedMessage'),
+      failedDetails: document.getElementById('failedDetails'),
+      failedDetail: document.getElementById('failedDetail'),
+      tryAgainButton: document.getElementById('tryAgainButton'),
+      resultPath: document.getElementById('resultPath'),
+      openReportButton: document.getElementById('openReportButton'),
+      newReviewButton: document.getElementById('newReviewButton'),
+      docPanel: document.getElementById('docPanel'),
+      resultFiles: document.getElementById('resultFiles'),
+      summary: document.getElementById('summary'),
+      report: document.getElementById('report'),
+      reportDivider: document.getElementById('reportDivider'),
+      document: document.getElementById('document'),
+      commentRail: document.getElementById('commentRail'),
+      commentRailTitle: document.getElementById('commentRailTitle'),
+      comments: document.getElementById('comments'),
+    }
+
+    let currentView = 'submit'
+    let selectedFile = null
+    let selectedModelId = ''
+    let activeRunId = null
+    let activeReportPath = ''
+    let activeDocxPath = ''
+    let unsubscribe = null
+    let activeCommentId = null
+    let workerAvailable = false
+    let workerError = ''
+    let modelError = ''
+    let runStartedAt = 0
+    let elapsedTimer = null
+    const STAGES = ['Extracting document', 'Checking document type', 'Running review agents', 'Reconciling review', 'Writing Word comments']
+
+    function show(view) {
+      currentView = view
+      el.submitView.hidden = view !== 'submit'
+      el.processingView.hidden = view !== 'processing'
+      el.failedView.hidden = view !== 'failed'
+      el.resultView.hidden = view !== 'result'
+      updateStartButtons(view !== 'submit')
+    }
+
+    function updateStartButtons(running = false) {
+      const disabled = running || !workerAvailable || !selectedFile?.path || !selectedModelId
+      el.startButton.disabled = disabled
+    }
+
+    function setSubmitStatus(text, error = false) {
+      el.submitStatus.textContent = text
+      el.submitStatus.classList.toggle('error', error)
+    }
+
+    function resetProcessingState() {
+      stopElapsedTimer()
+      runStartedAt = 0
+      el.eventList.innerHTML = ''
+      el.progressBar.style.width = '0%'
+      el.progressPercent.textContent = '0%'
+      el.processingStatus.textContent = 'Starting review'
+      el.currentActivity.textContent = 'Starting review'
+      updateStage('')
+      for (const chip of el.reviewerChips.querySelectorAll('.reviewer-chip')) {
+        chip.dataset.state = 'pending'
+      }
+      el.elapsedTime.textContent = '00:00'
+    }
+
+    function startElapsedTimer() {
+      stopElapsedTimer()
+      runStartedAt = Date.now()
+      renderElapsed()
+      elapsedTimer = setInterval(renderElapsed, 1000)
+    }
+
+    function stopElapsedTimer() {
+      if (elapsedTimer) clearInterval(elapsedTimer)
+      elapsedTimer = null
+    }
+
+    function renderElapsed() {
+      if (!runStartedAt) {
+        el.elapsedTime.textContent = '00:00'
+        return
+      }
+      el.elapsedTime.textContent = formatElapsed(Date.now() - runStartedAt)
+    }
+
+    function formatElapsed(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000))
+      const minutes = Math.floor(total / 60)
+      const seconds = total % 60
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    }
+
+    function updateProgress(value, label = '') {
+      const clamped = Math.max(0, Math.min(1, Number(value) || 0))
+      el.progressBar.style.width = `${clamped * 100}%`
+      el.progressPercent.textContent = `${Math.round(clamped * 100)}%`
+      if (label) el.processingStatus.textContent = label
+    }
+
+    function updateStage(name) {
+      const activeIndex = STAGES.indexOf(name)
+      for (const item of el.stageStepper.querySelectorAll('.stage-step')) {
+        const index = STAGES.indexOf(item.dataset.stage || '')
+        if (activeIndex === -1) item.dataset.state = 'pending'
+        else if (index < activeIndex) item.dataset.state = 'done'
+        else if (index === activeIndex) item.dataset.state = 'active'
+        else item.dataset.state = 'pending'
+        const marker = item.querySelector('b')
+        if (marker) marker.textContent = item.dataset.state === 'done' ? '✓' : String(index + 1)
+      }
+      if (name === 'Running review agents') {
+        for (const chip of el.reviewerChips.querySelectorAll('.reviewer-chip')) {
+          if (chip.dataset.state === 'pending') chip.dataset.state = 'active'
+        }
+      }
+    }
+
+    function setReviewerState(kind, state) {
+      const chip = el.reviewerChips.querySelector(`[data-reviewer="${kind}"]`)
+      if (chip) chip.dataset.state = state
+    }
+
+    function updateReviewerFromLog(message) {
+      if (/^Technical reviewer/i.test(message)) setReviewerState('technical', /timed out/i.test(message) ? 'error' : /issue/i.test(message) ? 'done' : 'active')
+      if (/^Editorial reviewer/i.test(message)) setReviewerState('editorial', /timed out/i.test(message) ? 'error' : /issue/i.test(message) ? 'done' : 'active')
+      if (/^Reference checker/i.test(message)) setReviewerState('reference', /timed out/i.test(message) ? 'error' : /issue/i.test(message) ? 'done' : 'active')
+    }
+
+    function blockingStatus() {
+      return workerError || modelError
+    }
+
+    function setSelectedFile(file) {
+      selectedFile = file
+      if (!file) {
+        el.fileRow.hidden = true
+        el.emptyFile.hidden = false
+        el.fileName.textContent = ''
+        el.fileMeta.textContent = ''
+        setSubmitStatus(blockingStatus(), !!blockingStatus())
+        updateStartButtons()
+        return
+      }
+      el.fileRow.hidden = false
+      el.emptyFile.hidden = true
+      el.fileName.textContent = file.path
+      el.fileMeta.textContent = `${formatSize(file.size)}${file.copied ? ' copied into inputs/' : ''}`
+      setSubmitStatus(blockingStatus(), !!blockingStatus())
+      updateStartButtons()
+    }
+
+    async function chooseFile() {
+      try {
+        setSubmitStatus('Opening file picker')
+        const result = await runtime.call('documents.pickReviewFile')
+        if (result?.cancelled) {
+          setSubmitStatus(blockingStatus(), !!blockingStatus())
+          return
+        }
+        if (!result?.path?.toLowerCase().endsWith('.docx')) {
+          setSubmitStatus('Only .docx files are supported in this workflow.', true)
+          return
+        }
+        setSelectedFile(result)
+        if (currentView !== 'submit') show('submit')
+      } catch (err) {
+        setSubmitStatus(err.message, true)
+      }
+    }
+
+    async function startReview() {
+      if (!selectedFile?.path) {
+        setSubmitStatus('Choose a DOCX file first.', true)
+        return
+      }
+      if (!selectedModelId) {
+        setSubmitStatus(modelError || 'Choose a review model first.', true)
+        return
+      }
+      if (!workerAvailable) {
+        setSubmitStatus(workerError || 'DOCX worker is not available.', true)
+        return
+      }
+      try {
+        activeCommentId = null
+        activeReportPath = ''
+        activeDocxPath = ''
+        resetProcessingState()
+        startElapsedTimer()
+        show('processing')
+        const reviewNotes = el.reviewNotes.value.trim()
+        const inputs = {
+          path: selectedFile.path,
+          modelId: selectedModelId,
+        }
+        if (reviewNotes) inputs.reviewNotes = reviewNotes
+        const run = await runtime.jobs.start('reviewDocx', inputs, { openWork: false })
+        activeRunId = run.runId
+        el.runId.textContent = activeRunId
+        unsubscribe?.()
+        unsubscribe = runtime.jobs.on(activeRunId, handleJobEvent)
+        await refreshActiveRun()
+      } catch (err) {
+        showFailure(err.message)
+      }
+    }
+
+    async function handleJobEvent(event) {
+      try {
+        addEvent(event)
+        if (event.type === 'job.progress') {
+          updateProgress(event.data?.value, event.data?.label ? String(event.data.label) : '')
+        }
+        if (event.type === 'job.step' && event.data?.name) {
+          el.processingStatus.textContent = String(event.data.name)
+          updateStage(String(event.data.name))
+        }
+        if (event.type === 'job.log' && event.data?.message) {
+          updateReviewerFromLog(String(event.data.message))
+        }
+        if (event.type === 'job.done' || event.type === 'job.failed' || event.type === 'job.cancelled') {
+          await refreshActiveRun(event.data?.error)
+        }
+      } catch (err) {
+        showFailure(err.message)
+      }
+    }
+
+    async function refreshActiveRun(eventError = '') {
+      if (!activeRunId) return
+      const latest = await runtime.jobs.get(activeRunId)
+      const run = latest?.run || latest
+      renderRunRecord(run, eventError)
+    }
+
+    function renderRunRecord(run, eventError = '') {
+      if (!run || !isTerminalStatus(run.status)) return
+      if (run.status === 'completed') {
+        const result = run.result || {}
+        if (result.status === 'complete') renderComplete(result)
+        else showFailure(result.reason || 'The review did not produce a complete result.')
+        return
+      }
+      showFailure(run.error || eventError || run.status)
+    }
+
+    function isTerminalStatus(status) {
+      return status === 'completed' || status === 'failed' || status === 'cancelled'
+    }
+
+    function addEvent(event) {
+      const display = eventDisplay(event)
+      if (!display) return
+      el.currentActivity.textContent = display.body
+      const row = document.createElement('div')
+      row.className = 'event'
+      row.innerHTML = `<code>${escapeHtml(display.kind)}</code><span>${escapeHtml(display.body)}</span>`
+      el.eventList.prepend(row)
+      while (el.eventList.children.length > 24) el.eventList.lastElementChild?.remove()
+    }
+
+    function eventDisplay(event) {
+      const data = event.data || {}
+      if (event.type === 'job.log' && data.message) return { kind: 'log', body: String(data.message) }
+      if (event.type === 'job.step' && data.name) return { kind: 'step', body: String(data.name) }
+      if (event.type === 'job.progress' && data.label) return { kind: 'progress', body: String(data.label) }
+      if (event.type === 'job.failed' && data.error) return { kind: 'failed', body: String(data.error) }
+      if (event.type === 'job.done' && data.summary) return { kind: 'done', body: String(data.summary) }
+      if (event.type === 'job.cancelled') return { kind: 'cancelled', body: 'Review cancelled' }
+      return null
+    }
+
+    function renderComplete(result) {
+      unsubscribe?.()
+      stopElapsedTimer()
+      updateProgress(1, 'Review complete')
+      activeReportPath = result.reportPath || ''
+      activeDocxPath = result.reviewedDocxPath || ''
+      const comments = sortedComments(result.comments || [], result.anchoredHtml || '')
+      const phrase = summaryPhrase(comments)
+      if (phrase) {
+        const domain = result.domainHint ? `${String(result.domainHint).toLowerCase()} ` : ''
+        const droppedCount = Array.isArray(result.dropped) ? result.dropped.length : 0
+        const droppedNote = droppedCount
+          ? ` ${droppedCount} reviewer comment${droppedCount === 1 ? '' : 's'} were merged or set aside during reconciliation (see the end of the report).`
+          : ''
+        el.summary.innerHTML = `<strong>Review results: ${escapeHtml(phrase)}.</strong><span>We reviewed your ${escapeHtml(domain)}paper. Read the report below and check the inline comments marked in the manuscript.${escapeHtml(droppedNote)}</span>`
+        el.summary.style.display = 'block'
+      } else {
+        el.summary.style.display = 'none'
+      }
+      const fileCount = [result.reviewedDocxPath, result.reportPath].filter(Boolean).length
+      el.resultPath.textContent = fileCount ? `${fileCount} result file${fileCount === 1 ? '' : 's'} created` : ''
+      renderResultFiles(result)
+      el.report.innerHTML = result.report ? renderMarkdown(result.report) : ''
+      el.reportDivider.hidden = !result.report
+      el.document.innerHTML = result.anchoredHtml || ''
+      renderComments(comments)
+      el.openReportButton.hidden = true
+      show('result')
+    }
+
+    function renderResultFiles(result) {
+      const files = []
+      if (result.reviewedDocxPath) {
+        files.push({
+          id: 'docx',
+          title: 'Reviewed Word document',
+          path: result.reviewedDocxPath,
+          note: 'Native Word comments, opened with your default DOCX app.',
+          action: 'Open',
+        })
+      }
+      if (result.reportPath) {
+        files.push({
+          id: 'report',
+          title: 'Peer review report',
+          path: result.reportPath,
+          note: 'Markdown report with the review summary and all comments.',
+          action: 'Open',
+        })
+      }
+      el.resultFiles.hidden = files.length === 0
+      el.resultFiles.innerHTML = files.length ? `
+        <h2>Result files</h2>
+        ${files.map(file => `
+          <div class="result-file-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+            <div>
+              <div class="result-file-title">${escapeHtml(file.title)}</div>
+              <div class="result-file-path">${escapeHtml(file.path)}</div>
+              <div class="result-file-note">${escapeHtml(file.note)}</div>
+            </div>
+            <button class="btn" data-open-result="${escapeHtml(file.id)}">${escapeHtml(file.action)}</button>
+          </div>
+        `).join('')}
+      ` : ''
+    }
+
+    function renderComments(comments) {
+      el.commentRail.hidden = comments.length === 0
+      el.commentRailTitle.textContent = `Inline Comments ${comments.length ? `(${comments.length})` : ''}`
+      el.comments.innerHTML = comments.map(comment => `
+        <button class="comment-card" data-comment-id="${escapeHtml(comment.id)}">
+          <div class="comment-meta">
+            <span>${comment.number}.</span>
+            <span class="severity ${normalizeSeverity(comment.severity)}">${normalizeSeverity(comment.severity)}</span>
+          </div>
+          <div class="comment-body">${escapeHtml(comment.content || '')}</div>
+          <div class="comment-quote">${escapeHtml(comment.text_snippet || '')}</div>
+        </button>
+      `).join('')
+    }
+
+    function sortedComments(comments, html) {
+      if (!comments?.length || !html) return comments || []
+      const markOrder = {}
+      const regex = /data-comment-id="([^"]+)"/g
+      let match
+      let index = 0
+      while ((match = regex.exec(html)) !== null) {
+        if (!(match[1] in markOrder)) markOrder[match[1]] = index++
+      }
+      return [...comments].sort((a, b) => (markOrder[a.id] ?? Infinity) - (markOrder[b.id] ?? Infinity))
+    }
+
+    function summaryPhrase(comments) {
+      const counts = { major: 0, minor: 0, suggestion: 0 }
+      for (const comment of comments) {
+        if (comment.severity in counts) counts[comment.severity]++
+      }
+      const parts = []
+      if (counts.major) parts.push(`${counts.major} major issue${counts.major === 1 ? '' : 's'}`)
+      if (counts.minor) parts.push(`${counts.minor} minor issue${counts.minor === 1 ? '' : 's'}`)
+      if (counts.suggestion) parts.push(`${counts.suggestion} suggestion${counts.suggestion === 1 ? '' : 's'}`)
+      if (parts.length === 0) return ''
+      if (parts.length === 1) return parts[0]
+      if (parts.length === 2) return `${parts[0]} and ${parts[1]}`
+      return `${parts[0]}, ${parts[1]}, and ${parts[2]}`
+    }
+
+    function setActiveComment(id) {
+      activeCommentId = activeCommentId === id ? null : id
+      document.querySelectorAll('.comment-card.active').forEach(node => node.classList.remove('active'))
+      document.querySelectorAll('.review-document mark.active').forEach(node => node.classList.remove('active'))
+      if (!activeCommentId) return
+      const card = el.comments.querySelector(`[data-comment-id="${cssEscape(activeCommentId)}"]`)
+      const mark = el.document.querySelector(`mark[data-comment-id="${cssEscape(activeCommentId)}"]`)
+      card?.classList.add('active')
+      mark?.classList.add('active')
+      mark?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
+    function showFailure(message) {
+      unsubscribe?.()
+      stopElapsedTimer()
+      const friendly = friendlyFailure(message || 'The review failed before a complete result was produced.')
+      el.failedMessage.textContent = friendly.message
+      el.failedDetail.textContent = friendly.detail || ''
+      el.failedDetails.hidden = !friendly.detail || friendly.detail === friendly.message
+      show('failed')
+    }
+
+    async function cancelReview() {
+      stopElapsedTimer()
+      if (activeRunId) await runtime.jobs.cancel(activeRunId)
+    }
+
+    async function openReport() {
+      if (activeReportPath) await runtime.call('editor.open', { path: activeReportPath })
+    }
+
+    async function openDocx() {
+      if (activeDocxPath) await runtime.call('fs.openNative', { path: activeDocxPath })
+    }
+
+    async function copyRunId() {
+      if (!activeRunId) return
+      await navigator.clipboard?.writeText(activeRunId).catch(() => {})
+      el.copyRunButton.textContent = 'Copied'
+      setTimeout(() => { el.copyRunButton.textContent = 'Copy' }, 1200)
+    }
+
+    function reset() {
+      unsubscribe?.()
+      stopElapsedTimer()
+      activeRunId = null
+      activeReportPath = ''
+      activeDocxPath = ''
+      activeCommentId = null
+      el.runId.textContent = 'No run'
+      resetProcessingState()
+      el.failedDetail.textContent = ''
+      el.failedDetails.hidden = true
+      el.resultFiles.innerHTML = ''
+      el.resultFiles.hidden = true
+      setSubmitStatus('')
+      show('submit')
+    }
+
+    async function loadModels() {
+      try {
+        const [registry, keyResult] = await Promise.all([
+          runtime.ai?.registry ? runtime.ai.registry() : runtime.call('ai.registry'),
+          runtime.ai?.keyStatus ? runtime.ai.keyStatus() : runtime.call('ai.keyStatus'),
+        ])
+        const statuses = new Map((keyResult?.statuses || []).map(status => [status.provider, status.configured === true]))
+        const models = (registry?.models || []).filter(model =>
+          model.capabilities?.tools !== false &&
+          model.capabilities?.text !== false,
+        )
+        if (!models.length) {
+          el.reviewModel.innerHTML = '<option value="">No compatible review models</option>'
+          el.reviewModel.disabled = true
+          selectedModelId = ''
+          modelError = 'No compatible DOCX review models are available.'
+          setSubmitStatus(blockingStatus(), true)
+          updateStartButtons()
+          return
+        }
+
+        const preferred = localStorage.getItem('mim:docx-review:model')
+        const defaultIds = registry?.defaults?.agent || registry?.defaults?.chat || []
+        const configured = models.filter(model => statuses.get(model.provider))
+        const preferredModel = models.find(model => model.id === preferred && statuses.get(model.provider))
+        const defaultModel = models.find(model =>
+          statuses.get(model.provider) && (defaultIds.includes(model.id) || defaultIds.includes(model.model)),
+        ) || models.find(model => defaultIds.includes(model.id) || defaultIds.includes(model.model))
+        const selected = preferredModel || defaultModel || configured[0] || models[0]
+        selectedModelId = selected?.id || ''
+        el.reviewModel.innerHTML = models.map(model => {
+          const configuredProvider = statuses.get(model.provider)
+          const ctxHint = model.contextWindow >= 1_000_000
+            ? ' — 1M context, best for large documents'
+            : model.contextWindow ? ` — ${Math.round(model.contextWindow / 1000)}k context` : ''
+          const label = `${model.displayName || model.name || model.id}${ctxHint}${configuredProvider ? '' : ' (key missing)'}`
+          return `<option value="${escapeHtml(model.id)}"${model.id === selectedModelId ? ' selected' : ''}${configuredProvider ? '' : ' disabled'}>${escapeHtml(label)}</option>`
+        }).join('')
+        el.reviewModel.disabled = configured.length === 0
+        if (configured.length === 0) {
+          selectedModelId = ''
+          modelError = 'No API key configured for any DOCX review model. Add a provider key in Settings.'
+          setSubmitStatus(blockingStatus(), true)
+        } else {
+          modelError = ''
+          setSubmitStatus(blockingStatus(), !!blockingStatus())
+        }
+        updateStartButtons()
+      } catch (err) {
+        el.reviewModel.innerHTML = '<option value="">Models unavailable</option>'
+        el.reviewModel.disabled = true
+        selectedModelId = ''
+        modelError = err.message
+        setSubmitStatus(blockingStatus(), true)
+        updateStartButtons()
+      }
+    }
+
+    function friendlyFailure(rawMessage) {
+      const detail = String(rawMessage || '')
+      const parsed = parseEmbeddedJson(detail)
+      if (parsed?.summary) {
+        const total = Number(parsed.summary.total || 0)
+        const succeeded = Number(parsed.summary.succeeded || 0)
+        const failed = Number(parsed.summary.failed || 0)
+        if (total && failed) {
+          return {
+            message: succeeded
+              ? `The Word writer placed ${succeeded} of ${total} comments. ${failed} comments still need better anchors.`
+              : `The Word writer could not place ${failed} of ${total} comments.`,
+            detail,
+          }
+        }
+      }
+      if (/DOCX worker binary not found/i.test(detail)) {
+        return {
+          message: 'The Word writer is not installed. Build the DOCX worker or configure DOCX_WORKER_PATH, then run the review again.',
+          detail,
+        }
+      }
+      if (/api key/i.test(detail)) {
+        return {
+          message: detail,
+          detail,
+        }
+      }
+      return {
+        message: detail.length > 220 ? `${detail.slice(0, 217)}...` : detail,
+        detail,
+      }
+    }
+
+    function parseEmbeddedJson(text) {
+      const start = String(text || '').indexOf('{')
+      if (start < 0) return null
+      try {
+        const parsed = JSON.parse(text.slice(start))
+        return parsed && typeof parsed === 'object' ? parsed : null
+      } catch {
+        return null
+      }
+    }
+
+    function renderMarkdown(text) {
+      const escaped = escapeHtml(text || '')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^\- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>\n?)+/gs, '<ul>$&</ul>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      return escaped
+        .split(/\n{2,}/)
+        .map(block => /^<h[123]|^<ul>/.test(block) ? block : `<p>${block.replace(/\n/g, '<br>')}</p>`)
+        .join('')
+    }
+
+    function formatSize(bytes) {
+      if (!Number.isFinite(Number(bytes))) return ''
+      if (bytes < 1024) return `${bytes} B`
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    function normalizeSeverity(value) {
+      return value === 'major' || value === 'minor' || value === 'suggestion' ? value : 'suggestion'
+    }
+
+    function cssEscape(value) {
+      return String(value).replace(/"/g, '\\"').replace(/\\/g, '\\\\')
+    }
+
+    el.chooseButton.addEventListener('click', chooseFile)
+    el.startButton.addEventListener('click', startReview)
+    el.changeFileButton.addEventListener('click', chooseFile)
+    el.reviewModel.addEventListener('change', () => {
+      selectedModelId = el.reviewModel.value
+      if (selectedModelId) localStorage.setItem('mim:docx-review:model', selectedModelId)
+      updateStartButtons()
+    })
+    el.cancelButton.addEventListener('click', cancelReview)
+    el.tryAgainButton.addEventListener('click', reset)
+    el.newReviewButton.addEventListener('click', reset)
+    el.openReportButton.addEventListener('click', openReport)
+    el.copyRunButton.addEventListener('click', copyRunId)
+    el.resultFiles.addEventListener('click', event => {
+      const button = event.target.closest('[data-open-result]')
+      if (!button) return
+      if (button.getAttribute('data-open-result') === 'docx') openDocx().catch(err => showFailure(err.message))
+      if (button.getAttribute('data-open-result') === 'report') openReport().catch(err => showFailure(err.message))
+    })
+    el.document.addEventListener('click', event => {
+      const mark = event.target.closest('mark[data-comment-id]')
+      if (mark) setActiveComment(mark.getAttribute('data-comment-id'))
+    })
+    el.comments.addEventListener('click', event => {
+      const card = event.target.closest('[data-comment-id]')
+      if (card) setActiveComment(card.getAttribute('data-comment-id'))
+    })
+
+    runtime.ready.then(async () => {
+      await loadModels()
+      try {
+        const status = await runtime.call('documents.docx.workerStatus')
+        workerAvailable = status?.available === true
+        workerError = workerAvailable ? '' : status?.error || 'DOCX worker is not available.'
+        if (workerError) setSubmitStatus(workerError, true)
+      } catch (err) {
+        workerAvailable = false
+        workerError = err.message
+        setSubmitStatus(workerError, true)
+      }
+      updateStartButtons()
+    })
+
+    // A key added in Settings broadcasts ai:keys-changed. Re-check models so the
+    // review dropdown enables without reopening this package.
+    runtime.on('ai:keys-changed', () => { loadModels() })
+  </script>
+</body>
+</html>

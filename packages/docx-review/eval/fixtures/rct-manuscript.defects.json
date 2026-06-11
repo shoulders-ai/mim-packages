@@ -1,0 +1,104 @@
+{
+  "slug": "rct-manuscript",
+  "kind": "RCT manuscript (CONSORT)",
+  "defects": [
+    {
+      "id": "d1",
+      "category": "statistics",
+      "locationSnippet": "We estimated that a sample of 60 patients would be sufficient to detect a clinically meaningful difference in fatigue between groups.",
+      "description": "The sample-size justification is non-quantitative and the trial is underpowered. No target effect size (minimal clinically important difference on the IBD-F scale), no assumed standard deviation, no alpha level, and no target power are stated. With 31 per arm and an attrition to ~28 per arm, this study can only reliably detect a large effect (roughly d >= 0.7); modest but clinically real fatigue improvements would be missed. CONSORT item 7a requires how the sample size was determined.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d2",
+      "category": "statistics",
+      "locationSnippet": "this difference reached statistical significance (p = 0.049)",
+      "description": "The primary result rests on a p-value of 0.049, which is barely below the 0.05 threshold, yet it is reported as a definitive positive finding. No effect size and no confidence interval accompany the p-value, so the magnitude and precision of the effect cannot be judged. A result this close to the boundary, in an underpowered single-centre trial, is fragile and should not be presented as conclusive.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d3",
+      "category": "statistics",
+      "locationSnippet": "Low-dose naltrexone significantly reduces fatigue in patients with quiescent Crohn's disease and should be considered as a first-line option for the management of IBD-related fatigue.",
+      "description": "Over-claim / spin. A borderline single primary result (p = 0.049) in a small single-centre trial is escalated in the abstract and discussion into a recommendation for first-line therapy. The strength of the recommendation is not supported by the strength or robustness of the evidence, and it goes well beyond what a single underpowered trial can establish.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d4",
+      "category": "reporting",
+      "locationSnippet": "Fatigue was assessed using the IBD-Fatigue (IBD-F) scale, a validated patient-reported instrument. Quality of life was assessed using the Short Inflammatory Bowel Disease Questionnaire (SIBDQ).",
+      "description": "No primary endpoint is ever explicitly designated. The Outcomes section lists several measures without distinguishing the pre-specified primary outcome from secondary outcomes, and the timepoint of the primary analysis (week 12 is implied but never stated as primary). CONSORT item 6a requires completely defined pre-specified primary and secondary outcome measures, including how and when they were assessed.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d5",
+      "category": "multiplicity",
+      "locationSnippet": "A two-sided p-value of less than 0.05 was considered statistically significant.",
+      "description": "Multiple secondary outcomes (SIBDQ, faecal calprotectin, CRP, subjective improvement, sleep quality, depression, abdominal pain) and multiple timepoints (week 6 and week 12) are each tested at alpha = 0.05 with no adjustment for multiplicity and no hierarchical testing strategy. This inflates the family-wise type I error rate and makes the scattered 'significant' secondary findings unreliable.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d6",
+      "category": "reporting",
+      "locationSnippet": "Six patients did not complete the trial: three in the LDN group (two withdrew consent, one lost to follow-up) and three in the placebo group (one withdrew consent, two lost to follow-up).",
+      "description": "Participant flow is described only in prose and there is no CONSORT flow diagram (assessed for eligibility, randomized, allocated, lost to follow-up, analysed). The numbers analysed per group are not clearly stated, and the analysis population is ambiguous (see related claim about 'attended at least one follow-up visit'), so this is not a true intention-to-treat analysis. CONSORT item 13 (participant flow / diagram) is unmet.",
+      "severity": "major",
+      "mustCatch": true
+    },
+    {
+      "id": "d7",
+      "category": "missing-data",
+      "locationSnippet": "All randomized patients who attended at least one follow-up visit were included in the analysis.",
+      "description": "This is a modified (per-protocol-leaning) analysis set, not intention-to-treat: patients who never returned are excluded, and no method for handling missing data (e.g., multiple imputation, mixed models) is described. Combined with differential reasons for dropout, this risks attrition bias that could inflate the borderline primary effect.",
+      "severity": "minor",
+      "mustCatch": true
+    },
+    {
+      "id": "d8",
+      "category": "citation",
+      "locationSnippet": "Low-dose naltrexone therapy improves active Crohn's disease. *Am J Gastroenterol*. 2011;102(4):820",
+      "description": "Wrong publication year. Smith JP et al., Am J Gastroenterol, volume 102, pages 820-828 was published in 2007, not 2011. The volume/issue/pages correspond to the 2007 article, so the year is internally inconsistent and incorrect.",
+      "severity": "minor",
+      "mustCatch": true
+    },
+    {
+      "id": "d9",
+      "category": "citation",
+      "locationSnippet": "7. Parker CE, Nguyen TM, Segal D, et al. Low dose naltrexone for maintenance of remission in Crohn's disease. *Cochrane Database Syst Rev*. 2020;(4):CD010410.",
+      "description": "Phantom / uncited reference. Reference 7 appears in the reference list but is never cited anywhere in the body text (in-text citations run only [1] through [6]). It is presented as a Cochrane systematic review with a plausible-looking CD identifier, but no such review of LDN for maintenance of remission in Crohn's disease exists, making it an unverifiable / fabricated-looking reference as well as an orphan entry.",
+      "severity": "minor",
+      "mustCatch": true
+    },
+    {
+      "id": "d10",
+      "category": "reporting",
+      "locationSnippet": "At week 12, the LDN group showed a greater improvement in fatigue scores than placebo (p = 0.049).",
+      "description": "Results are reported as p-values only, with no point estimates, means per group, mean differences, or confidence intervals anywhere in the abstract or results text. CONSORT item 17a requires, for each outcome, the estimated effect size and its precision (e.g., 95% CI). The reader cannot assess clinical relevance from a p-value alone.",
+      "severity": "minor",
+      "mustCatch": true
+    },
+    {
+      "id": "d11",
+      "category": "statistics",
+      "locationSnippet": "The proportion of patients reporting a subjective overall improvement was higher in the LDN group (68% versus 45%, p = 0.07).",
+      "description": "Inconsistent interpretation of the significance threshold. A result with p = 0.07 (non-significant by the authors' own 0.05 rule) is presented favourably within a narrative of benefit, while elsewhere a p = 0.049 is treated as definitive. This selective framing of near-threshold results is a form of spin.",
+      "severity": "suggestion",
+      "mustCatch": false
+    }
+  ],
+  "cleanClaims": [
+    "Participants were randomized 1:1 to LDN or placebo using a computer-generated randomization sequence with permuted blocks. (Adequate randomization method, correctly reported.)",
+    "Allocation was concealed using sequentially numbered, opaque, sealed containers prepared by the hospital pharmacy. (Adequate allocation concealment, correctly reported.)",
+    "LDN and placebo capsules were identical in appearance, and patients, investigators, and outcome assessors were blinded to allocation throughout the trial. (Adequate double-blinding, correctly reported and should NOT be flagged.)",
+    "The trial was approved by the regional research ethics committee, and all participants provided written informed consent. (Appropriate ethics reporting.)",
+    "The two groups were well balanced at baseline with respect to age, sex, disease duration, and baseline fatigue scores (Table 1). (Baseline balance with a real baseline table provided; do not flag absence of Table 1.)",
+    "Younger J, Parkitny L, McLain D. The use of low-dose naltrexone as a novel anti-inflammatory treatment for chronic pain. *Clin Rheumatol*. 2014;33(4):451-459. (Correct, real citation with correct year; must NOT be flagged.)",
+    "C-reactive protein did not differ meaningfully between groups (p = 0.62). (A correctly reported null secondary result; reporting a non-significant secondary finding honestly is not a defect.)",
+    "The trial was conducted at a single centre, which may limit generalizability. (A genuine limitation that the authors correctly disclose; the disclosure itself should not be flagged as a defect.)"
+  ]
+}

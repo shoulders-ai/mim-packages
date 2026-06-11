@@ -1,0 +1,21 @@
+{
+  "name": "@mim/slides",
+  "version": "0.1.1",
+  "type": "module",
+  "mim": {
+    "manifestVersion": 1,
+    "id": "slides",
+    "name": "Slides",
+    "icon": "./ui/icon.svg",
+    "description": "Generates slide decks as paginated HTML and exports a print-exact PDF.",
+    "views": [
+      { "id": "main", "label": "Slides", "src": "./ui/index.html", "role": "work" }
+    ],
+    "backend": "./backend/index.mjs",
+    "permissions": {
+      "workspace": { "read": true, "write": true },
+      "ai": true
+    },
+    "engines": { "mim": "runtime-v1" }
+  }
+}

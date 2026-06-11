@@ -1,0 +1,8 @@
+{
+  "minRecallMicro": 0.80,
+  "minPrecisionMicro": 0.70,
+  "maxCleanControlFalsePositives": 3,
+  "maxFalsePositivesOnCleanClaims": 0,
+  "perCategoryMinRecall": { "statistics": 0.80, "references": 0.75 },
+  "maxFailedFixtures": 0
+}

@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/sdk/tokens.css">
+  <title>Knowledge</title>
+  <style>
+    /* ── Layout ── */
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; flex-direction: column; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: 6px var(--space-md);
+      border-bottom: 1px solid var(--color-rule-light);
+      flex-shrink: 0;
+    }
+    .toolbar-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ink-2);
+    }
+    .toolbar-spacer { flex: 1; }
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 26px;
+      padding: 0 8px;
+      border-radius: var(--radius-md);
+      background: var(--color-chrome-mid);
+      border: 1px solid var(--color-rule-light);
+    }
+    .search-box:focus-within { border-color: var(--color-accent); }
+    .search-box svg { flex-shrink: 0; color: var(--color-ink-3); }
+    .search-input {
+      flex: 1;
+      min-width: 0;
+      width: 180px;
+      background: transparent;
+      border: none;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink);
+      outline: none;
+      padding: 0;
+    }
+    .search-input::placeholder { color: var(--color-ink-3); }
+
+    .btn-new {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: var(--radius-md);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .btn-new:hover { opacity: 0.9; }
+
+    /* ── Tag Bar ── */
+    .tag-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px var(--space-md);
+      border-bottom: 1px solid var(--color-rule-light);
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .tag-bar:empty { display: none; }
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 100px;
+      background: var(--color-chrome-mid);
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--color-ink-2);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tag-chip:hover { background: var(--color-chrome); }
+    .tag-chip--active {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+
+    /* ── Sort Toggle ── */
+    .sort-toggle {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--color-ink-3);
+      padding: 0 6px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-sm);
+    }
+    .sort-toggle:hover { color: var(--color-ink-2); background: var(--color-chrome-mid); }
+
+    /* ── Content Area ── */
+    .content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: var(--space-md);
+    }
+
+    /* ── Card Grid ── */
+    .card-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      cursor: default;
+      transition: background 0.1s;
+    }
+    .card:hover { background: var(--color-chrome-high); }
+
+    .card-title {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ink);
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .card-tag {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 100px;
+      background: var(--color-accent-soft);
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--color-accent);
+    }
+    .card-excerpt {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink-3);
+      line-height: 1.4;
+      margin-top: 6px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+    .card-date {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--color-ink-4);
+      margin-top: auto;
+      padding-top: 8px;
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: var(--space-lg);
+    }
+    .empty-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+    .empty-title {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--color-ink-2);
+      margin-bottom: 4px;
+    }
+    .empty-sub {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink-3);
+      max-width: 240px;
+      line-height: 1.5;
+    }
+    .empty-btn {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: var(--radius-md);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .empty-btn:hover { opacity: 0.9; }
+    .empty-error {
+      margin-top: 10px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-danger, #c0392b);
+      max-width: 240px;
+      line-height: 1.5;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: var(--color-ink-3);
+      font-size: 12px;
+    }
+
+    /* ── Detail Overlay ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 48px;
+      z-index: 100;
+    }
+    .detail {
+      background: var(--color-surface);
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-lg);
+      width: 600px;
+      max-width: 95vw;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-header {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--color-rule-light);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .detail-title-input {
+      display: block;
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-ink);
+      padding: 0;
+    }
+    .detail-title-input::placeholder { color: var(--color-ink-3); }
+    .detail-open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--color-ink-3);
+      flex-shrink: 0;
+    }
+    .detail-open-btn:hover { color: var(--color-ink-2); background: var(--color-chrome-mid); }
+
+    .detail-tags-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+    .detail-tags-label {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--color-ink-3);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
+    .detail-tags-input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink);
+      padding: 0;
+    }
+    .detail-tags-input::placeholder { color: var(--color-ink-3); }
+
+    .detail-body {
+      padding: var(--space-md);
+      flex: 1;
+    }
+    .detail-body-view {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--color-ink);
+      min-height: 120px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .detail-body-view h1, .detail-body-view h2, .detail-body-view h3 {
+      font-family: var(--font-sans);
+      font-weight: 600;
+      margin-top: 1.2em;
+      margin-bottom: 0.4em;
+      color: var(--color-ink);
+    }
+    .detail-body-view h1 { font-size: 18px; }
+    .detail-body-view h2 { font-size: 15px; }
+    .detail-body-view h3 { font-size: 13px; }
+    .detail-body-view p { margin-bottom: 0.7em; }
+    .detail-body-view ul, .detail-body-view ol {
+      margin-bottom: 0.7em;
+      padding-left: 1.4em;
+    }
+    .detail-body-view li { margin-bottom: 0.2em; }
+    .detail-body-view code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--color-chrome-mid);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .detail-body-view pre {
+      background: var(--color-chrome-mid);
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      padding: var(--space-sm);
+      overflow-x: auto;
+      margin-bottom: 0.7em;
+    }
+    .detail-body-view pre code {
+      background: none;
+      padding: 0;
+    }
+    .detail-body-view blockquote {
+      border-left: 3px solid var(--color-accent);
+      padding-left: var(--space-sm);
+      color: var(--color-ink-2);
+      margin-bottom: 0.7em;
+    }
+    .detail-body-view a {
+      color: var(--color-accent);
+      text-decoration: underline;
+    }
+    .detail-body-view strong { font-weight: 600; }
+    .detail-body-view em { font-style: italic; }
+
+    .detail-textarea {
+      display: block;
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+      border: 1px solid var(--color-rule-light);
+      border-radius: var(--radius-sm);
+      padding: var(--space-sm);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--color-ink);
+      background: var(--color-surface);
+      outline: none;
+    }
+    .detail-textarea:focus { border-color: var(--color-accent); }
+    .detail-textarea::placeholder { color: var(--color-ink-3); }
+
+    .detail-footer {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md) var(--space-md);
+    }
+    .detail-date {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-ink-4);
+    }
+    .detail-spacer { flex: 1; }
+    .detail-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-rule-light);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink-2);
+    }
+    .detail-edit-btn:hover { background: var(--color-chrome-mid); }
+    .detail-edit-btn--active {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      border-color: var(--color-accent);
+    }
+    .detail-edit-btn--active:hover { opacity: 0.9; background: var(--color-accent); }
+    .detail-delete-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-rem);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-rem);
+    }
+    .detail-delete-btn:hover { background: rgba(192, 93, 60, 0.08); }
+
+    /* ── New Entry Form ── */
+    .new-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 48px;
+      z-index: 100;
+    }
+    .new-form {
+      background: var(--color-surface);
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-lg);
+      width: 480px;
+      max-width: 95vw;
+      display: flex;
+      flex-direction: column;
+    }
+    .new-form-header {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--color-rule-light);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-ink);
+    }
+    .new-form-body {
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .new-form-label {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-ink-3);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+    .new-form-field { display: flex; flex-direction: column; }
+    .new-form-field input,
+    .new-form-field textarea {
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+    .new-form-field textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .new-form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md) var(--space-md);
+    }
+    .new-form-cancel {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--color-ink-3);
+    }
+    .new-form-cancel:hover { color: var(--color-ink-2); background: var(--color-chrome-mid); }
+    .new-form-save {
+      height: 28px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .new-form-save:hover { opacity: 0.9; }
+
+    /* ── Kbd hint ── */
+    .kbd-hint {
+      position: fixed;
+      bottom: 8px;
+      right: 12px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--color-ink-4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="toolbar-title">Knowledge Base</span>
+  <div class="sort-toggle" id="sortToggle" title="Toggle sort order">Newest</div>
+  <span class="toolbar-spacer"></span>
+  <div class="search-box">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" id="searchInput" type="search" placeholder="Search..." autocorrect="off" autocapitalize="off">
+  </div>
+  <button class="btn-new" id="btnNew">+ New</button>
+</div>
+
+<div class="tag-bar" id="tagBar"></div>
+
+<div class="content" id="content">
+  <div class="loading" id="loadingMsg">Loading...</div>
+</div>
+
+<!-- Detail overlay -->
+<div class="overlay" id="overlay" style="display:none">
+  <div class="detail" id="detail">
+    <div class="detail-header">
+      <input class="detail-title-input" id="detailTitle" type="text" placeholder="Entry title...">
+      <button class="detail-open-btn" id="detailOpenBtn" title="Open in editor">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open
+      </button>
+    </div>
+    <div class="detail-tags-row">
+      <span class="detail-tags-label">Tags</span>
+      <input class="detail-tags-input" id="detailTags" type="text" placeholder="comma-separated tags...">
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+    <div class="detail-footer">
+      <span class="detail-date" id="detailDate"></span>
+      <span class="detail-spacer"></span>
+      <button class="detail-edit-btn" id="detailEditBtn">Edit</button>
+      <button class="detail-delete-btn" id="detailDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- New entry overlay -->
+<div class="new-overlay" id="newOverlay" style="display:none">
+  <div class="new-form">
+    <div class="new-form-header">New Knowledge Entry</div>
+    <div class="new-form-body">
+      <div class="new-form-field">
+        <label class="new-form-label">Title</label>
+        <input type="text" id="newTitle" placeholder="Entry title...">
+      </div>
+      <div class="new-form-field">
+        <label class="new-form-label">Tags</label>
+        <input type="text" id="newTags" placeholder="comma-separated tags...">
+      </div>
+      <div class="new-form-field">
+        <label class="new-form-label">Content</label>
+        <textarea id="newBody" placeholder="Write markdown content..."></textarea>
+      </div>
+    </div>
+    <div class="new-form-footer">
+      <button class="new-form-cancel" id="newCancel">Cancel</button>
+      <button class="new-form-save" id="newSave">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="kbd-hint">/ search &middot; N new &middot; Esc close</div>
+
+<script type="module">
+import { runtime } from '/sdk/mim.js'
+
+// ── State ──
+
+let entries = []        // { id, title, tags, created, updated, body? }
+let folderPresent = true
+let searchQuery = ''
+let activeTag = ''
+let sortMode = 'date'   // 'date' | 'alpha'
+let openDetailId = null
+let editMode = false
+let showNewForm = false
+
+// Normalize a server entity (knowledge.list item or knowledge.get result) into
+// the flat shape the UI renders. `body` is present only after knowledge.get.
+function normEntry(raw) {
+  return {
+    id: raw.id,
+    title: raw.title || '',
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    created: raw.created || '',
+    updated: raw.updated || '',
+    body: typeof raw.body === 'string' ? raw.body : undefined,
+  }
+}
+
+// ── Simple Markdown renderer ──
+
+function renderMarkdown(md) {
+  if (!md) return '<p style="color:var(--color-ink-3);font-style:italic;">No content.</p>'
+  let html = md
+    // Code blocks
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code>${escapeHtml(code.trimEnd())}</code></pre>`)
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Headings
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Blockquotes
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // Links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // Unordered lists
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    // Ordered lists
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+
+  // Paragraphs: split by double newlines
+  html = html.split(/\n{2,}/).map(block => {
+    block = block.trim()
+    if (!block) return ''
+    if (block.startsWith('<h') || block.startsWith('<pre') ||
+        block.startsWith('<ul') || block.startsWith('<ol') ||
+        block.startsWith('<blockquote')) return block
+    return `<p>${block.replace(/\n/g, '<br>')}</p>`
+  }).join('\n')
+
+  return html
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// ── Data access (core tools via runtime SDK) ──
+
+async function loadEntries() {
+  const result = await runtime.call('knowledge.list', {})
+  folderPresent = result.folderPresent !== false
+  entries = (result.items || []).map(normEntry)
+}
+
+async function saveEntry(entry) {
+  const result = await runtime.call('knowledge.update', {
+    id: entry.id,
+    title: entry.title,
+    tags: entry.tags,
+    body: entry.body || '',
+  })
+  if (result && result.folderPresent === false) { folderPresent = false; return }
+  if (result && result.id) {
+    const merged = normEntry(result)
+    if (merged.body === undefined) merged.body = entry.body
+    const idx = entries.findIndex(e => e.id === entry.id)
+    if (idx !== -1) entries[idx] = merged
+  }
+}
+
+async function createEntry(title, tags, body) {
+  const result = await runtime.call('knowledge.create', {
+    title,
+    tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+    body,
+  })
+  if (!result || result.folderPresent === false) { folderPresent = false; render(); return null }
+  const entry = normEntry(result)
+  if (entry.body === undefined) entry.body = body
+  entries.push(entry)
+  return entry
+}
+
+async function deleteEntry(id) {
+  const entry = entries.find(e => e.id === id)
+  if (!entry) return
+  await runtime.call('knowledge.delete', { id })
+  entries = entries.filter(e => e.id !== id)
+}
+
+// Lazily fetch the full body for an entry (list items omit it).
+async function ensureBody(entry) {
+  if (typeof entry.body === 'string') return entry.body
+  try {
+    const full = await runtime.call('knowledge.get', { id: entry.id })
+    entry.body = typeof full.body === 'string' ? full.body : ''
+  } catch {
+    entry.body = ''
+  }
+  return entry.body
+}
+
+// ── Filtering & Sorting ──
+
+function getAllTags() {
+  const set = new Set()
+  entries.forEach(e => (e.tags || []).forEach(t => set.add(t)))
+  return [...set].sort()
+}
+
+function getFilteredEntries() {
+  let result = entries
+
+  // Tag filter
+  if (activeTag) {
+    result = result.filter(e => (e.tags || []).includes(activeTag))
+  }
+
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase()
+    result = result.filter(e =>
+      (e.title || '').toLowerCase().includes(q) ||
+      (e.tags || []).some(t => t.toLowerCase().includes(q)) ||
+      (e.body || '').toLowerCase().includes(q)
+    )
+  }
+
+  // Sort
+  if (sortMode === 'date') {
+    result.sort((a, b) => new Date(b.updated || b.created || 0) - new Date(a.updated || a.created || 0))
+  } else {
+    result.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+  }
+
+  return result
+}
+
+// ── Render ──
+
+const contentEl = document.getElementById('content')
+const tagBarEl = document.getElementById('tagBar')
+const loadingEl = document.getElementById('loadingMsg')
+const sortToggleEl = document.getElementById('sortToggle')
+
+function render() {
+  if (!folderPresent) {
+    tagBarEl.innerHTML = ''
+    renderOffer()
+    return
+  }
+  renderTagBar()
+  renderCards()
+  sortToggleEl.textContent = sortMode === 'date' ? 'Newest' : 'A-Z'
+}
+
+// Offer-not-block panel shown when the knowledge/ folder does not exist.
+function renderOffer() {
+  contentEl.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <div class="empty-title">No knowledge/ folder yet</div>
+      <div class="empty-sub">Knowledge entries live in a <code>knowledge/</code> folder in your workspace. Create it to start writing.</div>
+      <button class="empty-btn" id="offerCreate">Create knowledge folder</button>
+      <div class="empty-error" id="offerError" hidden></div>
+    </div>
+  `
+  const btn = document.getElementById('offerCreate')
+  const errEl = document.getElementById('offerError')
+  if (btn) btn.addEventListener('click', async () => {
+    btn.disabled = true
+    if (errEl) errEl.hidden = true
+    try {
+      await runtime.call('app.enable', { app: 'knowledge' })
+      await loadEntries()
+      render()
+    } catch (err) {
+      console.warn('[knowledge] enable error:', err)
+      if (errEl) {
+        errEl.textContent = 'Could not create the knowledge folder: ' + (err && err.message ? err.message : String(err))
+        errEl.hidden = false
+      }
+      btn.disabled = false
+    }
+  })
+}
+
+function renderTagBar() {
+  const tags = getAllTags()
+  if (tags.length === 0) {
+    tagBarEl.innerHTML = ''
+    return
+  }
+  tagBarEl.innerHTML = tags.map(t =>
+    `<button class="tag-chip ${activeTag === t ? 'tag-chip--active' : ''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+  ).join('')
+
+  tagBarEl.querySelectorAll('.tag-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const tag = chip.dataset.tag
+      activeTag = activeTag === tag ? '' : tag
+      render()
+    })
+  })
+}
+
+function renderCards() {
+  const filtered = getFilteredEntries()
+
+  if (filtered.length === 0) {
+    contentEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">${searchQuery || activeTag ? 'No matching entries' : 'No knowledge entries yet'}</div>
+        <div class="empty-sub">${searchQuery || activeTag
+          ? 'Try different search terms or clear the filter.'
+          : 'Create your first entry to start building your knowledge base.'}</div>
+        ${!searchQuery && !activeTag ? '<button class="empty-btn" id="emptyNewBtn">+ New Entry</button>' : ''}
+      </div>
+    `
+    const emptyBtn = document.getElementById('emptyNewBtn')
+    if (emptyBtn) emptyBtn.addEventListener('click', openNewForm)
+    return
+  }
+
+  contentEl.innerHTML = `<div class="card-grid">${filtered.map(renderCardHTML).join('')}</div>`
+
+  contentEl.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      openDetail(card.dataset.id)
+    })
+  })
+}
+
+function renderCardHTML(entry) {
+  const excerpt = (entry.body || '').replace(/^#+\s+/gm, '').replace(/[*_`#>\-]/g, '').trim().slice(0, 100)
+  const date = formatDate(entry.updated || entry.created)
+  const tagsHtml = (entry.tags || []).slice(0, 4).map(t =>
+    `<span class="card-tag">${escapeHtml(t)}</span>`
+  ).join('')
+
+  return `
+    <div class="card" data-id="${entry.id}">
+      <div class="card-title">${escapeHtml(entry.title || '(untitled)')}</div>
+      ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+      ${excerpt ? `<div class="card-excerpt">${escapeHtml(excerpt)}</div>` : ''}
+      <div class="card-date">${date}</div>
+    </div>
+  `
+}
+
+// ── Detail View ──
+
+const overlayEl = document.getElementById('overlay')
+const detailEl = document.getElementById('detail')
+const detailTitleEl = document.getElementById('detailTitle')
+const detailTagsEl = document.getElementById('detailTags')
+const detailBodyEl = document.getElementById('detailBody')
+const detailDateEl = document.getElementById('detailDate')
+const detailEditBtn = document.getElementById('detailEditBtn')
+const detailDeleteBtn = document.getElementById('detailDeleteBtn')
+const detailOpenBtn = document.getElementById('detailOpenBtn')
+
+async function openDetail(id) {
+  const entry = entries.find(e => e.id === id)
+  if (!entry) return
+  openDetailId = id
+  editMode = false
+  detailTitleEl.value = entry.title || ''
+  detailTagsEl.value = (entry.tags || []).join(', ')
+  renderDetailBody(entry)
+  detailDateEl.textContent = entry.created ? 'Created ' + formatDate(entry.created) : ''
+  detailEditBtn.textContent = 'Edit'
+  detailEditBtn.classList.remove('detail-edit-btn--active')
+  overlayEl.style.display = 'flex'
+  detailTitleEl.focus()
+  // Body is omitted from list items; fetch it lazily then re-render the view.
+  await ensureBody(entry)
+  if (openDetailId === id && !editMode) renderDetailBody(entry)
+}
+
+function renderDetailBody(entry) {
+  if (editMode) {
+    detailBodyEl.innerHTML = `<textarea class="detail-textarea" id="detailTextarea" placeholder="Write markdown...">${escapeHtml(entry.body || '')}</textarea>`
+  } else {
+    detailBodyEl.innerHTML = `<div class="detail-body-view">${renderMarkdown(entry.body)}</div>`
+  }
+}
+
+function closeDetail() {
+  if (openDetailId) saveDetailChanges()
+  openDetailId = null
+  editMode = false
+  overlayEl.style.display = 'none'
+  render()
+}
+
+function saveDetailChanges() {
+  const entry = entries.find(e => e.id === openDetailId)
+  if (!entry) return
+  entry.title = detailTitleEl.value.trim() || entry.title
+  entry.tags = detailTagsEl.value.split(',').map(t => t.trim()).filter(Boolean)
+  if (editMode) {
+    const textarea = document.getElementById('detailTextarea')
+    if (textarea) entry.body = textarea.value
+  }
+  saveEntry(entry)
+}
+
+// Toggle edit mode
+detailEditBtn.addEventListener('click', () => {
+  const entry = entries.find(e => e.id === openDetailId)
+  if (!entry) return
+
+  if (editMode) {
+    // Save and switch to view
+    const textarea = document.getElementById('detailTextarea')
+    if (textarea) entry.body = textarea.value
+    editMode = false
+    detailEditBtn.textContent = 'Edit'
+    detailEditBtn.classList.remove('detail-edit-btn--active')
+    saveEntry(entry)
+  } else {
+    // Switch to edit
+    editMode = true
+    detailEditBtn.textContent = 'Done'
+    detailEditBtn.classList.add('detail-edit-btn--active')
+  }
+  renderDetailBody(entry)
+})
+
+// Delete
+detailDeleteBtn.addEventListener('click', async () => {
+  const id = openDetailId
+  if (!id) return
+  openDetailId = null
+  overlayEl.style.display = 'none'
+  await deleteEntry(id)
+  render()
+})
+
+// Open in editor. Knowledge files live at {workspace}/knowledge/{id}.md.
+detailOpenBtn.addEventListener('click', () => {
+  const entry = entries.find(e => e.id === openDetailId)
+  if (!entry) return
+  runtime.call('editor.open', { path: `knowledge/${entry.id}.md` })
+})
+
+// Close on overlay click
+overlayEl.addEventListener('click', (e) => {
+  if (e.target === overlayEl) closeDetail()
+})
+
+// Save on title/tags blur
+detailTitleEl.addEventListener('blur', () => {
+  if (openDetailId) saveDetailChanges()
+})
+detailTagsEl.addEventListener('blur', () => {
+  if (openDetailId) saveDetailChanges()
+})
+
+// ── New Entry Form ──
+
+const newOverlayEl = document.getElementById('newOverlay')
+const newTitleEl = document.getElementById('newTitle')
+const newTagsEl = document.getElementById('newTags')
+const newBodyEl = document.getElementById('newBody')
+
+function openNewForm() {
+  showNewForm = true
+  newTitleEl.value = ''
+  newTagsEl.value = ''
+  newBodyEl.value = ''
+  newOverlayEl.style.display = 'flex'
+  requestAnimationFrame(() => newTitleEl.focus())
+}
+
+function closeNewForm() {
+  showNewForm = false
+  newOverlayEl.style.display = 'none'
+}
+
+document.getElementById('btnNew').addEventListener('click', openNewForm)
+
+document.getElementById('newCancel').addEventListener('click', closeNewForm)
+
+document.getElementById('newSave').addEventListener('click', async () => {
+  const title = newTitleEl.value.trim()
+  if (!title) { newTitleEl.focus(); return }
+  const entry = await createEntry(title, newTagsEl.value, newBodyEl.value)
+  closeNewForm()
+  render()
+  if (entry) openDetail(entry.id)
+})
+
+newOverlayEl.addEventListener('click', (e) => {
+  if (e.target === newOverlayEl) closeNewForm()
+})
+
+// Enter in title field submits new form
+newTitleEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    document.getElementById('newSave').click()
+  }
+})
+
+// ── Sort Toggle ──
+
+sortToggleEl.addEventListener('click', () => {
+  sortMode = sortMode === 'date' ? 'alpha' : 'date'
+  render()
+})
+
+// ── Search ──
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchQuery = e.target.value
+  render()
+})
+
+// ── Keyboard Shortcuts ──
+
+document.addEventListener('keydown', (e) => {
+  // Don't capture if inside an input/textarea
+  const tag = document.activeElement?.tagName
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA'
+
+  if (e.key === 'Escape') {
+    if (openDetailId) { closeDetail(); return }
+    if (showNewForm) { closeNewForm(); return }
+    if (isInput) { document.activeElement.blur(); return }
+  }
+
+  if (isInput) return
+
+  if (e.key === '/') {
+    e.preventDefault()
+    document.getElementById('searchInput').focus()
+  }
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault()
+    openNewForm()
+  }
+})
+
+// ── Helpers ──
+
+function formatDate(isoStr) {
+  try {
+    const d = new Date(isoStr)
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch { return '' }
+}
+
+// ── Init ──
+
+async function init() {
+  try {
+    await loadEntries()
+  } catch (err) {
+    console.warn('[knowledge] init error:', err)
+  }
+  loadingEl.remove()
+  render()
+}
+
+// Reload when workspace changes
+runtime.on('workspace:changed', async () => {
+  entries = []
+  activeTag = ''
+  searchQuery = ''
+  openDetailId = null
+  overlayEl.style.display = 'none'
+  newOverlayEl.style.display = 'none'
+  contentEl.innerHTML = ''
+  const loader = document.createElement('div')
+  loader.className = 'loading'
+  loader.textContent = 'Loading...'
+  contentEl.appendChild(loader)
+  try {
+    await loadEntries()
+  } catch (err) {
+    console.warn('[knowledge] reload error:', err)
+  }
+  loader.remove()
+  render()
+})
+
+// Reload when a core app is enabled/disabled elsewhere (mim.yaml flag changed; enable also creates the folder).
+runtime.on('apps:changed', async () => {
+  try {
+    await loadEntries()
+  } catch (err) {
+    console.warn('[knowledge] apps:changed reload error:', err)
+  }
+  render()
+})
+
+init()
+</script>
+</body>
+</html>
