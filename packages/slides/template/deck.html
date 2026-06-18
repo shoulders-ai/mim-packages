@@ -8,7 +8,8 @@
     workspace images may be referenced by relative path.
   - Every slide is a top-level <section class="slide"> — 1280x720 CSS px,
     PowerPoint's default 16:9 page (13.333in x 7.5in at 96dpi).
-  - Slides print one per PDF page. Keep all content inside the slide box;
+  - Slides print one per PDF page through normal CSS page breaks on .slide.
+    No pagination library is required. Keep all content inside the slide box;
     overflow is clipped and flagged by the renderer.
   - Decorative elements may intentionally cross the slide edge ONLY when
     marked data-bleed (on the element or an ancestor).

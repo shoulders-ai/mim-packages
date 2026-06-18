@@ -184,9 +184,9 @@
       },
       "repo": "https://github.com/shoulders-ai/mim-apps",
       "path": "packages/slides",
-      "version": "0.1.1",
-      "ref": "79d15e0f1674f76adae59a23acfb4f515dd6e935",
-      "commit": "79d15e0f1674f76adae59a23acfb4f515dd6e935"
+      "version": "0.2.0",
+      "ref": "0284b8bb8a17d63c8b8d8e6e14e439561b461858",
+      "commit": "0284b8bb8a17d63c8b8d8e6e14e439561b461858"
     }
   ]
 }

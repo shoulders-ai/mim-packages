@@ -47,12 +47,11 @@ describe('Slides UI chrome contracts', () => {
     expect(resultView).toContain('id="refineBar"')
   })
 
-  it('has a design review container on the result view', () => {
+  it('does not keep the retired design review UI path', () => {
     const html = slidesSource()
-    expect(html).toContain('id="designReview"')
-    // Design review container is inside result view and starts hidden
-    const resultView = html.slice(html.indexOf('id="resultView"'))
-    expect(resultView).toContain('id="designReview"')
+    expect(html).not.toContain('id="designReview"')
+    expect(html).not.toContain('renderDesignReview')
+    expect(() => ruleFor('.design-review')).toThrow('Missing CSS rule')
   })
 
   it('has a usage line on the result view', () => {
@@ -62,12 +61,9 @@ describe('Slides UI chrome contracts', () => {
     expect(resultView).toContain('id="usageLine"')
   })
 
-  it('has CSS rules for refine bar, design review, and usage line', () => {
+  it('has CSS rules for refine bar and usage line', () => {
     const refineBar = ruleFor('.refine-bar')
     expect(declaration(refineBar, 'display').value).toBe('flex')
-
-    const designReview = ruleFor('.design-review')
-    expect(declaration(designReview, 'font-size').value).toBe('11px')
 
     const usageLine = ruleFor('.usage-line')
     expect(declaration(usageLine, 'font-size').value).toBe('10px')
@@ -99,16 +95,15 @@ describe('Slides UI chrome contracts', () => {
     const html = slidesSource()
     const script = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i)?.[1] || ''
     expect(script).toContain('function deckCapableModels(')
-    expect(script).toContain("model.provider === 'anthropic'")
-    expect(script).toContain('model.capabilities?.tools !== false')
+    expect(script).not.toContain("model.provider === 'anthropic'")
+    expect(script).not.toContain('model.capabilities?.tools !== false')
+    expect(script).toContain('model.capabilities?.text !== false')
   })
 
-  it('escapes model-generated findings text via escapeHtml', () => {
+  it('escapes job events before inserting them into the progress list', () => {
     const html = slidesSource()
     const script = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i)?.[1] || ''
-    // The renderDesignReview function uses escapeHtml for finding text
-    expect(script).toContain('escapeHtml(f.problem')
-    expect(script).toContain('escapeHtml(f.fix')
-    expect(script).toContain('escapeHtml(f.slideId')
+    expect(script).toContain('escapeHtml(event.type')
+    expect(script).toContain('escapeHtml(String(body))')
   })
 })

@@ -243,18 +243,6 @@
       background: var(--color-warning-tint, #fdf3da);
       border-bottom: 1px solid var(--color-rule-light);
     }
-    .design-review {
-      padding: 8px 18px;
-      font-size: 11px;
-      line-height: 1.5;
-      color: var(--color-ink-2);
-      border-bottom: 1px solid var(--color-rule-light);
-      background: var(--color-surface);
-    }
-    .design-review .finding { margin: 2px 0; }
-    .design-review .finding.resolved { text-decoration: line-through; color: var(--color-ink-3); }
-    .design-review .severity-major { font-weight: 600; }
-    .design-review .skipped { color: var(--color-ink-3); font-style: italic; }
     .refine-bar {
       display: flex;
       align-items: center;
@@ -297,7 +285,7 @@
       <div class="head">
         <div class="kicker">Slides</div>
         <h1>Generate a deck</h1>
-        <p class="lead">Describe the deck. The agent writes paginated HTML on PowerPoint geometry, checks every slide fits its page, and exports a print-exact PDF.</p>
+        <p class="lead">Describe the deck. The agent writes paginated HTML from the built-in PowerPoint geometry template and exports one print-exact PDF.</p>
       </div>
       <div class="deck-form">
         <label class="field">
@@ -373,7 +361,6 @@
     <div class="result-body">
       <div class="usage-line" id="usageLine" hidden></div>
       <div class="summary-block" id="summaryBlock" hidden></div>
-      <div class="design-review" id="designReview" hidden></div>
       <div class="issue-strip" id="issueStrip" hidden></div>
       <div class="refine-bar" id="refineBar">
         <input type="text" id="refineInput" placeholder="Make slide 4 a bar chart of the Q2 numbers">
@@ -397,7 +384,7 @@
       'failedMessage', 'tryAgainButton',
       'resultTitle', 'resultSub', 'newDeckButton', 'openHtmlButton', 'openPdfButton',
       'summaryBlock', 'issueStrip', 'previewWrap', 'previewScale', 'previewFrame',
-      'usageLine', 'designReview', 'refineBar', 'refineInput', 'refineButton',
+      'usageLine', 'refineBar', 'refineInput', 'refineButton',
     ].map(id => [id, document.getElementById(id)]))
 
     const PREVIEW_WIDTH = 1328 // 1280px slide + 24px screen padding each side
@@ -644,20 +631,13 @@
       if (!Array.isArray(models)) return []
       return models.filter(model =>
         model &&
-        model.provider === 'anthropic' &&
-        model.capabilities?.tools !== false &&
         model.capabilities?.text !== false,
       )
     }
 
     async function loadModels() {
       try {
-        const [registry, keys] = await Promise.all([runtime.ai.registry(), runtime.ai.keyStatus()])
-        const anthropicKey = (keys?.statuses || []).find(item => item.provider === 'anthropic')
-        if (anthropicKey && anthropicKey.configured === false) {
-          modelError = 'No Anthropic API key configured. Add one in Settings.'
-          setStatus(modelError, true)
-        }
+        const registry = await runtime.ai.registry()
         const models = deckCapableModels(registry?.models || [])
         const defaults = registry?.defaults?.agent || registry?.defaults?.chat || []
         el.model.innerHTML = ''
@@ -672,7 +652,7 @@
           if (model.model && model.pricing) modelPricingMap.set(model.model, model.pricing)
         }
         if (!models.length) {
-          modelError = 'No Anthropic models available.'
+          modelError = 'No text models available.'
           setStatus(modelError, true)
         }
       } catch (err) {
@@ -792,9 +772,6 @@
         el.summaryBlock.hidden = true
       }
 
-      // Design review findings
-      renderDesignReview(result.designReview)
-
       const issues = result.issues || []
       if (issues.length) {
         el.issueStrip.textContent = issues
@@ -823,7 +800,7 @@
       let totalCacheRead = 0
       for (const [, phaseUsage] of Object.entries(usage)) {
         if (!phaseUsage) continue
-        // Handle both single usage objects and arrays of usage objects (e.g. sections, critique)
+        // Handle both single usage objects and arrays of usage objects.
         const items = Array.isArray(phaseUsage) ? phaseUsage : [phaseUsage]
         for (const u of items) {
           if (!u || typeof u !== 'object') continue
@@ -860,35 +837,6 @@
       if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
       if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
       return String(n)
-    }
-
-    function renderDesignReview(review) {
-      if (!review || typeof review !== 'object') {
-        el.designReview.hidden = true
-        return
-      }
-      const findings = Array.isArray(review.findings) ? review.findings : []
-      const skipped = review.skipped
-      if (findings.length === 0 && !skipped) {
-        el.designReview.hidden = true
-        return
-      }
-      el.designReview.innerHTML = ''
-      for (const f of findings) {
-        const div = document.createElement('div')
-        div.className = f.resolved ? 'finding resolved' : 'finding'
-        const severityClass = f.severity === 'major' ? 'severity-major' : ''
-        const prefix = f.resolved ? '✓ ' : ''
-        div.innerHTML = `${escapeHtml(prefix)}<span class="${severityClass}">Slide ${escapeHtml(f.slideId || '?')}</span> — ${escapeHtml(f.severity || 'minor')} — ${escapeHtml(f.problem || '')}${f.fix ? '; fix: ' + escapeHtml(f.fix) : ''}`
-        el.designReview.appendChild(div)
-      }
-      if (skipped) {
-        const p = document.createElement('div')
-        p.className = 'skipped'
-        p.textContent = String(skipped)
-        el.designReview.appendChild(p)
-      }
-      el.designReview.hidden = false
     }
 
     async function loadPreview(htmlPath) {
