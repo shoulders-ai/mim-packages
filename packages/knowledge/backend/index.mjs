@@ -32,7 +32,7 @@ const fieldsSchema = {
   links: {
     type: 'array',
     items: { type: 'string' },
-    description: 'Directed graph links as "relation target-id", e.g. "works_at eversana".',
+    description: 'Directed graph links as "relation target-id", e.g. "works_at example-org".',
   },
   extra: {
     type: 'object',
@@ -129,6 +129,12 @@ function yamlScalar(value) {
   if (typeof value === 'boolean') return value ? 'true' : 'false'
   if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   return JSON.stringify(String(value ?? ''))
+}
+
+function compactErrorText(value, maxChars = 180) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim()
+  if (text.length <= maxChars) return text
+  return `${text.slice(0, maxChars - 3).trimEnd()}...`
 }
 
 function coerceTags(value) {
@@ -299,6 +305,18 @@ export async function getKnowledge(ctx, input) {
   return readKnowledgeFile(ctx, requireId(input))
 }
 
+async function duplicateKnowledgeError(ctx, id) {
+  const details = []
+  try {
+    const existing = await readKnowledgeFile(ctx, id)
+    if (existing.title) details.push(compactErrorText(existing.title))
+    if (existing.summary) details.push(compactErrorText(existing.summary))
+  } catch {
+    // The collision itself is enough; existing metadata is only diagnostic.
+  }
+  return `Knowledge entry already exists: ${id}${details.length ? ` (${details.join('; ')})` : ''}`
+}
+
 export async function createKnowledge(ctx, input = {}) {
   if (!await folderPresent(ctx)) return { folderPresent: false }
   validateTitle(input)
@@ -316,15 +334,17 @@ export async function createKnowledge(ctx, input = {}) {
     body: typeof input.body === 'string' ? input.body : '',
   }
 
-  const preferredId = input.id === undefined || input.id === null || input.id === ''
-    ? newKnowledgeId(input.title)
-    : requireValidId(String(input.id))
+  const explicitId = !(input.id === undefined || input.id === null || input.id === '')
+  const preferredId = explicitId ? requireValidId(String(input.id)) : newKnowledgeId(input.title)
 
   for (let attempt = 1; attempt <= 100; attempt++) {
     entry.id = attempt === 1 ? preferredId : `${preferredId}-${attempt}`
     requireValidId(entry.id)
     const path = `${KNOWLEDGE_DIR}/${entry.id}.md`
     const exists = await ctx.tools.call('fs.exists', { path })
+    if (exists?.exists === true && explicitId) {
+      throw new Error(await duplicateKnowledgeError(ctx, entry.id))
+    }
     if (exists?.exists === true) continue
     try {
       await ctx.tools.call('fs.create', { path, content: serializeKnowledge(entry) })
@@ -523,7 +543,7 @@ export const tools = {
   catalog: {
     name: 'knowledge.catalog',
     label: 'Knowledge catalog',
-    description: 'Returns all knowledge entries as a compact catalog: id, type, title, optional short summary, tags. No body. Use this first to find entries before reading them with knowledge.get. No SQL is required.',
+    description: 'Return all knowledge entries as a compact catalog without bodies.',
     inputSchema: objectSchema({}),
     audience: ['chat'],
     execute: catalogKnowledge,
@@ -555,7 +575,7 @@ export const tools = {
   neighbors: {
     name: 'knowledge.neighbors',
     label: 'Knowledge neighbors',
-    description: 'Returns entries connected to a given entry via frontmatter links, in both directions. Use after knowledge.catalog to explore the graph. No SQL is required.',
+    description: 'Return entries connected to an entry through frontmatter links.',
     inputSchema: objectSchema({ id: { type: 'string' } }, ['id']),
     audience: ['chat'],
     execute: neighborsKnowledge,
@@ -563,7 +583,7 @@ export const tools = {
   graph: {
     name: 'knowledge.graph',
     label: 'Knowledge graph',
-    description: 'Returns knowledge graph nodes and directed edges from links frontmatter. No bodies. This is the graph API; callers do not query SQLite directly.',
+    description: 'Return graph nodes and directed edges from knowledge links.',
     inputSchema: objectSchema({}),
     audience: ['chat'],
     execute: graphKnowledge,
@@ -571,9 +591,9 @@ export const tools = {
   search: {
     name: 'knowledge.search',
     label: 'Search knowledge',
-    description: 'Plain-text search over title, id, type, summary, tags, and body. Returns matching entries without bodies. The SQLite FTS index is internal; pass normal search words, not SQL.',
+    description: 'Search title, id, type, summary, tags, and body; returns matching entries without bodies.',
     inputSchema: objectSchema({
-      query: { type: 'string', description: 'Plain-text search terms. Do not pass SQL.' },
+      query: { type: 'string', description: 'Plain-text search terms.' },
       limit: { type: 'number', description: 'Optional maximum number of results.' },
     }, ['query']),
     audience: ['chat'],

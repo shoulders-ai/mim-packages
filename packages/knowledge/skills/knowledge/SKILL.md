@@ -64,7 +64,7 @@ applies_to        note/project -> project/note
 
 ## Writing Rules
 
-- Prefer slug IDs derived from titles, e.g. `fde-three-views`, `nicole-ferko`, `eversana-engagement`.
+- Prefer slug IDs derived from titles, e.g. `framework-note`, `jane-doe`, `example-project`.
 - Before creating an entry, check `knowledge.catalog` or `knowledge.search` for an existing match.
 - Use `knowledge.update` rather than creating duplicates.
 - Keep summaries short. A missing summary is fine; do not write verbose summaries just to fill the field.

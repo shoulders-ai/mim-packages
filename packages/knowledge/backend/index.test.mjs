@@ -98,25 +98,25 @@ describe('knowledge package model', () => {
   })
 
   it('parses links and keeps unknown frontmatter in extra', () => {
-    const entry = parseKnowledge('nicole-ferko', `---
-title: Nicole Ferko
+    const entry = parseKnowledge('jane-doe', `---
+title: Jane Doe
 type: person
-summary: EVERSANA contact.
+summary: Example project contact.
 tags:
-  - eversana
+  - example-org
 links:
-  - "works_at eversana"
-  - "contact_for eversana-engagement"
-email: nicole@example.com
+  - "works_at example-org"
+  - "contact_for example-project"
+email: jane@example.test
 sensitive: false
 ---
 Body`)
 
     expect(entry.links).toEqual([
-      { rel: 'works_at', target: 'eversana' },
-      { rel: 'contact_for', target: 'eversana-engagement' },
+      { rel: 'works_at', target: 'example-org' },
+      { rel: 'contact_for', target: 'example-project' },
     ])
-    expect(entry.extra).toEqual({ email: 'nicole@example.com', sensitive: false })
+    expect(entry.extra).toEqual({ email: 'jane@example.test', sensitive: false })
   })
 })
 
@@ -196,9 +196,15 @@ describe('knowledge package tools', () => {
 
   it('honors explicit slug ids on create', async () => {
     const ctx = createCtx({ 'knowledge/.keep': '' })
-    const created = await createKnowledge(ctx, { id: 'nicole-ferko', title: 'Nicole Ferko' })
-    expect(created.id).toBe('nicole-ferko')
-    await expect(createKnowledge(ctx, { id: 'Nicole Ferko', title: 'Bad' })).rejects.toThrow(/Invalid knowledge id/)
+    const created = await createKnowledge(ctx, {
+      id: 'jane-doe',
+      title: 'Jane Doe',
+      summary: 'Example project contact.',
+    })
+    expect(created.id).toBe('jane-doe')
+    await expect(createKnowledge(ctx, { id: 'Jane Doe', title: 'Bad' })).rejects.toThrow(/Invalid knowledge id/)
+    await expect(createKnowledge(ctx, { id: 'jane-doe', title: 'Duplicate Jane' }))
+      .rejects.toThrow('Knowledge entry already exists: jane-doe (Jane Doe; Example project contact.)')
   })
 
   it('rejects only excessively long summaries', async () => {
@@ -208,12 +214,12 @@ describe('knowledge package tools', () => {
   })
 
   it('catalog and neighbors expose graph retrieval without bodies', async () => {
-    const eversana = serializeKnowledge({
-      id: 'eversana',
-      title: 'EVERSANA',
+    const org = serializeKnowledge({
+      id: 'example-org',
+      title: 'Example Org',
       type: 'org',
-      summary: 'Global HEOR company.',
-      tags: ['heor'],
+      summary: 'Example organization.',
+      tags: ['example'],
       links: [],
       extra: {},
       created: '2026-06-01T00:00:00.000Z',
@@ -221,39 +227,39 @@ describe('knowledge package tools', () => {
       body: 'Body should not leak into catalog.',
     })
     const project = serializeKnowledge({
-      id: 'eversana-engagement',
-      title: 'EVERSANA Engagement',
+      id: 'example-project',
+      title: 'Example Project',
       type: 'project',
-      summary: 'AI advisory for HEOR team.',
-      tags: ['fde', 'client'],
-      links: [{ rel: 'engagement_for', target: 'eversana' }],
+      summary: 'Example graph project.',
+      tags: ['example', 'client'],
+      links: [{ rel: 'engagement_for', target: 'example-org' }],
       extra: {},
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
       body: '',
     })
     const ctx = createCtx({
-      'knowledge/eversana.md': eversana,
-      'knowledge/eversana-engagement.md': project,
+      'knowledge/example-org.md': org,
+      'knowledge/example-project.md': project,
     })
 
     await expect(catalogKnowledge(ctx)).resolves.toEqual({
       entries: expect.arrayContaining([
-        expect.objectContaining({ id: 'eversana', type: 'org', title: 'EVERSANA', summary: 'Global HEOR company.' }),
+        expect.objectContaining({ id: 'example-org', type: 'org', title: 'Example Org', summary: 'Example organization.' }),
       ]),
     })
     const catalog = await catalogKnowledge(ctx)
     expect(catalog.entries[0]).not.toHaveProperty('body')
 
-    const neighbors = await neighborsKnowledge(ctx, { id: 'eversana' })
+    const neighbors = await neighborsKnowledge(ctx, { id: 'example-org' })
     expect(neighbors.incoming).toEqual([
-      expect.objectContaining({ rel: 'engagement_for', id: 'eversana-engagement', type: 'project' }),
+      expect.objectContaining({ rel: 'engagement_for', id: 'example-project', type: 'project' }),
     ])
 
     const graph = await graphKnowledge(ctx)
     expect(graph.nodes).toHaveLength(2)
     expect(graph.edges).toEqual([
-      { source: 'eversana-engagement', target: 'eversana', rel: 'engagement_for', missing: false },
+      { source: 'example-project', target: 'example-org', rel: 'engagement_for', missing: false },
     ])
   })
 
@@ -271,27 +277,27 @@ describe('knowledge package tools', () => {
       body: '',
     })
     const sensitive = serializeKnowledge({
-      id: 'personal-bank-account',
-      title: 'Personal Bank Account',
+      id: 'example-sensitive-record',
+      title: 'Example Sensitive Record',
       type: 'record',
-      summary: 'Account number DE00 SECRET.',
+      summary: 'Secret example value.',
       tags: ['banking'],
       links: [],
       extra: { sensitive: true },
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
-      body: 'DE00 SECRET',
+      body: 'SECRET',
     })
     const ctx = createCtx({
       'knowledge/deploy-notes.md': entry,
-      'knowledge/personal-bank-account.md': sensitive,
+      'knowledge/example-sensitive-record.md': sensitive,
     })
     const section = await knowledgeAgentContext(ctx)
     expect(section.title).toBe('Knowledge')
     expect(section.body).toContain('2 entries.')
     expect(section.body).toContain('- deploy-notes [note]: Deploy notes — How production deploys work. [ops]')
-    expect(section.body).toContain('- personal-bank-account [record]: Personal Bank Account — [sensitive record; read explicitly if needed] [banking]')
-    expect(section.body).not.toContain('DE00 SECRET')
+    expect(section.body).toContain('- example-sensitive-record [record]: Example Sensitive Record — [sensitive record; read explicitly if needed] [banking]')
+    expect(section.body).not.toContain('SECRET')
   })
 
   it('search falls back to markdown entries and omits bodies', async () => {
