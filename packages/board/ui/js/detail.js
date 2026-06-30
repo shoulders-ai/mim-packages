@@ -2,23 +2,34 @@ import { state, render, findIssue, showToast } from './state.js'
 import { STATUS_LABELS, PRIORITY_LABELS, LABEL_COLOR_VALUES } from './constants.js'
 import { statusToken, priorityBars, icon } from './icons.js'
 import { saveIssue, deleteIssue, ensureBody } from './data.js'
-import { formatDate, relativeTime, userInitial, qs } from './utils.js'
+import { escapeAttr, escapeHtml, formatDate, relativeTime, userInitial, qs } from './utils.js'
 
 let saveTimer = null
+let detailEditVersion = 0
 
 function scheduleDetailSave() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(flushDetailSave, 600)
 }
 
-function flushDetailSave() {
-  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null }
+export function syncDetailDraftFromDom() {
+  if (state.page !== 'detail') return
   const issue = findIssue(state.detailIssueId)
   if (!issue) return
   const titleEl = qs('#detailTitle')
   const bodyEl = qs('#detailBody')
   if (titleEl) issue.title = titleEl.value.trim() || issue.title
-  if (bodyEl) issue.body = bodyEl.value
+  if (bodyEl && (typeof issue.body === 'string' || bodyEl.value !== '') && issue.body !== bodyEl.value) {
+    issue.body = bodyEl.value
+    detailEditVersion += 1
+  }
+}
+
+export function flushDetailSave() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null }
+  const issue = findIssue(state.detailIssueId)
+  if (!issue) return
+  syncDetailDraftFromDom()
   saveIssue(issue)
 }
 
@@ -32,8 +43,10 @@ export function openDetail(id) {
 
   const issue = findIssue(id)
   if (!issue) return
+  const loadVersion = detailEditVersion
   ensureBody(issue).then(() => {
     if (state.detailIssueId !== id) return
+    if (detailEditVersion !== loadVersion) return
     const bodyEl = qs('#detailBody')
     if (bodyEl) bodyEl.value = issue.body || ''
   })
@@ -47,7 +60,7 @@ export function closeDetail() {
 }
 
 function propRow(issue, field, label, visual) {
-  return `<button class="prop-row" data-action="open-field" data-field="${field}" data-id="${issue.id}">
+  return `<button class="prop-row" data-action="open-field" data-field="${field}" data-id="${escapeAttr(issue.id)}">
     ${visual}
     <span>${label}</span>
   </button>`
@@ -60,17 +73,17 @@ export function renderDetail() {
   const statusLabel = STATUS_LABELS[issue.status] || issue.status
   const priorityLabel = PRIORITY_LABELS[issue.priority] || issue.priority
   const assigneeVisual = issue.assignee
-    ? `<span class="avatar-sm">${userInitial(issue.assignee)}</span>`
+    ? `<span class="avatar-sm">${escapeHtml(userInitial(issue.assignee))}</span>`
     : '<span class="avatar-sm avatar-empty">–</span>'
   const assigneeLabel = issue.assignee || 'Unassigned'
 
   const labelsHTML = (issue.labels || []).map(l => {
     const color = LABEL_COLOR_VALUES[l.color] || LABEL_COLOR_VALUES.gray
-    return `<span class="label-pill"><span class="label-dot" style="background:${color}"></span>${l.name}</span>`
+    return `<span class="label-pill"><span class="label-dot" style="background:${color}"></span>${escapeHtml(l.name)}</span>`
   }).join('')
 
   const dueDateHTML = issue.dueDate
-    ? `<span>${formatDate(issue.dueDate)}</span>`
+    ? `<span>${escapeHtml(formatDate(issue.dueDate))}</span>`
     : '<span class="prop-muted">No due date</span>'
 
   const projectLabel = issue.project || 'No project'
@@ -78,24 +91,24 @@ export function renderDetail() {
   return `<div class="detail-layout">
     <div class="detail-center">
     <article class="detail-main">
-      <input class="detail-title" id="detailTitle" type="text" value="${(issue.title || '').replace(/"/g, '&quot;')}" placeholder="Issue title...">
+      <input class="detail-title" id="detailTitle" type="text" value="${escapeAttr(issue.title || '')}" placeholder="Issue title...">
 
       <div class="detail-section">
         <div class="detail-label">Description</div>
-        <textarea class="detail-textarea" id="detailBody" placeholder="Add a description...">${issue.body || ''}</textarea>
+        <textarea class="detail-textarea" id="detailBody" placeholder="Add a description...">${escapeHtml(issue.body || '')}</textarea>
       </div>
 
       <div class="detail-section">
-        <div class="detail-created-line">${issue.assignee || 'Created'} · ${relativeTime(issue.created)}</div>
+        <div class="detail-created-line">${escapeHtml(issue.assignee || 'Created')} · ${escapeHtml(relativeTime(issue.created))}</div>
       </div>
     </article>
 
     <aside class="detail-sidebar">
       <div class="prop-card">
         <div class="prop-card-title">Properties</div>
-        ${propRow(issue, 'status', statusLabel, statusToken(issue.status))}
-        ${propRow(issue, 'priority', priorityLabel, `<span class="fm-priority">${priorityBars(issue.priority)}</span>`)}
-        ${propRow(issue, 'assignee', assigneeLabel, assigneeVisual)}
+        ${propRow(issue, 'status', escapeHtml(statusLabel), statusToken(issue.status))}
+        ${propRow(issue, 'priority', escapeHtml(priorityLabel), `<span class="fm-priority">${priorityBars(issue.priority)}</span>`)}
+        ${propRow(issue, 'assignee', escapeHtml(assigneeLabel), assigneeVisual)}
       </div>
 
       <div class="prop-card">
@@ -108,7 +121,7 @@ export function renderDetail() {
 
       <div class="prop-card">
         <div class="prop-card-title">Project</div>
-        ${propRow(issue, 'project', projectLabel, icon('folder', 14))}
+        ${propRow(issue, 'project', escapeHtml(projectLabel), icon('folder', 14))}
       </div>
 
       <div class="prop-card">
@@ -118,11 +131,11 @@ export function renderDetail() {
 
       <div class="prop-card">
         <div class="detail-meta">
-          <span>ID: ${issue.id}</span>
-          <span>Created ${formatDate(issue.created)}</span>
-          ${issue.updated ? `<span>Updated ${formatDate(issue.updated)}</span>` : ''}
+          <span>ID: ${escapeHtml(issue.id)}</span>
+          <span>Created ${escapeHtml(formatDate(issue.created))}</span>
+          ${issue.updated ? `<span>Updated ${escapeHtml(formatDate(issue.updated))}</span>` : ''}
         </div>
-        <button class="detail-delete" data-action="delete-issue" data-id="${issue.id}">
+        <button class="detail-delete" data-action="delete-issue" data-id="${escapeAttr(issue.id)}">
           ${icon('trash', 13)} Delete issue
         </button>
       </div>
@@ -133,7 +146,17 @@ export function renderDetail() {
 
 export function initDetailListeners() {
   document.addEventListener('input', (e) => {
-    if (e.target.id === 'detailTitle' || e.target.id === 'detailBody') {
+    if (e.target.id === 'detailTitle') {
+      const issue = findIssue(state.detailIssueId)
+      if (issue) issue.title = e.target.value.trim() || issue.title
+      scheduleDetailSave()
+    }
+    if (e.target.id === 'detailBody') {
+      const issue = findIssue(state.detailIssueId)
+      if (issue) {
+        issue.body = e.target.value
+        detailEditVersion += 1
+      }
       scheduleDetailSave()
     }
   })

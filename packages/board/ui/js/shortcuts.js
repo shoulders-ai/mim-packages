@@ -1,4 +1,5 @@
 import { state, render, closeTopLayer } from './state.js'
+import { makeNewIssueDraft } from './createDraft.js'
 import { qs } from './utils.js'
 
 export function initShortcuts() {
@@ -22,20 +23,14 @@ export function initShortcuts() {
 
     if (e.key === 'c' || e.key === 'C') {
       e.preventDefault()
-      state.newIssue = {
-        status: 'backlog',
-        priority: 'normal',
-        assignee: state.userName,
-        project: '',
-        labels: [],
-      }
+      state.newIssue = makeNewIssueDraft({ userName: state.userName })
       state.modalOpen = true
       state.settingsOpen = false
       state.fieldMenu = null
       render()
       requestAnimationFrame(() => {
         const el = qs('#createTitle')
-        if (el) { el.textContent = ''; el.focus() }
+        if (el) el.focus()
       })
       return
     }

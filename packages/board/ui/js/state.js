@@ -1,3 +1,5 @@
+import { makeNewIssueDraft } from './createDraft.js'
+
 let _render = () => {}
 
 export const state = {
@@ -23,14 +25,9 @@ export const state = {
 
   dragId: null,
 
-  newIssue: {
-    status: 'backlog',
-    priority: 'normal',
-    assignee: '',
-    project: '',
-    labels: [],
-  },
+  newIssue: makeNewIssueDraft(),
   createMore: false,
+  createSubmitting: false,
 
   displayProps: new Set(['priority', 'labels', 'dueDate', 'assignee']),
 }

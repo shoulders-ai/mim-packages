@@ -99,6 +99,7 @@ export async function createIssue(title, opts = {}) {
     project: opts.project || '',
     assignee: opts.assignee || '',
     dueDate: opts.dueDate || undefined,
+    body: opts.body || '',
   })
   if (!result || result.folderPresent === false) {
     state.folderPresent = false
@@ -120,8 +121,10 @@ export async function ensureBody(issue) {
   if (typeof issue.body === 'string') return issue.body
   try {
     const full = await runtime.call('issues.get', { id: issue.id })
+    if (typeof issue.body === 'string') return issue.body
     issue.body = typeof full.body === 'string' ? full.body : ''
   } catch {
+    if (typeof issue.body === 'string') return issue.body
     issue.body = ''
   }
   return issue.body

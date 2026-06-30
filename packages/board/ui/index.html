@@ -984,9 +984,20 @@
     }
     .create-desc {
       color: var(--color-ink-4);
+      width: 100%;
+      min-height: 38px;
+      padding: 0;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      font-family: var(--font-sans);
       font-size: 13px;
+      line-height: 1.35;
       margin-bottom: 14px;
     }
+    .create-desc:not(:placeholder-shown) { color: var(--color-ink-2); }
+    .create-desc::placeholder { color: var(--color-ink-4); }
     .create-chips {
       display: flex;
       align-items: center;
@@ -1048,6 +1059,7 @@
       margin-left: auto;
     }
     .create-submit:hover { opacity: .9; }
+    .create-submit:disabled { opacity: .55; }
 
     /* ── Toast ── */
     .toast {

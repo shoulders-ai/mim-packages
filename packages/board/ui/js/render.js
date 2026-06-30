@@ -1,9 +1,10 @@
 import { state, setRenderFn, render } from './state.js'
 import { renderBoard, initBoardDrag } from './board.js'
 import { renderList } from './list.js'
-import { renderDetail, initDetailListeners, openDetail, closeDetail, handleDeleteIssue } from './detail.js'
-import { renderCreateModal, handleCreateIssue, initCreateListeners } from './create.js'
-import { renderFieldMenu, handleFieldSelect, openFieldMenu, initFieldMenuListeners, handleLabelColorChange } from './fields.js'
+import { renderDetail, initDetailListeners, openDetail, closeDetail, handleDeleteIssue, syncDetailDraftFromDom } from './detail.js'
+import { makeNewIssueDraft } from './createDraft.js'
+import { renderCreateModal, handleCreateIssue, initCreateListeners, syncCreateDraftFromDom } from './create.js'
+import { renderFieldMenu, handleFieldSelect, openFieldMenu, initFieldMenuListeners, handleLabelColorChange, commitFieldMenuTextInput } from './fields.js'
 import { renderSettings, handleToggleProp } from './settings.js'
 import { renderToolbar } from './toolbar.js'
 import { renderToast } from './toast.js'
@@ -56,8 +57,7 @@ function handleClick(e) {
   if (!target) {
     let changed = false
     if (state.fieldMenu && !e.target.closest('.field-menu')) {
-      state.fieldMenu = null
-      changed = true
+      commitFieldMenuTextInput({ close: true })
     }
     if (state.settingsOpen && !e.target.closest('.settings-popover') && !e.target.closest('[data-action="toggle-settings"]')) {
       state.settingsOpen = false
@@ -68,6 +68,9 @@ function handleClick(e) {
   }
 
   const action = target.dataset.action
+  if (state.fieldMenu && !e.target.closest('.field-menu')) {
+    commitFieldMenuTextInput({ close: true })
+  }
 
   if (action === 'open-detail') {
     e.stopPropagation()
@@ -78,12 +81,14 @@ function handleClick(e) {
 
   if (action === 'open-field') {
     e.stopPropagation()
+    syncDetailDraftFromDom()
     openFieldMenu(target, target.dataset.field, target.dataset.id, false)
     return
   }
 
   if (action === 'open-new-field') {
     e.stopPropagation()
+    syncCreateDraftFromDom()
     openFieldMenu(target, target.dataset.field, '', true)
     return
   }
@@ -132,20 +137,18 @@ function handleClick(e) {
   }
 
   if (action === 'new-issue') {
-    state.newIssue = {
+    state.newIssue = makeNewIssueDraft({
       status: target.dataset.status || 'backlog',
-      priority: 'normal',
-      assignee: state.userName,
       project: target.dataset.project || '',
-      labels: [],
-    }
+      userName: state.userName,
+    })
     state.modalOpen = true
     state.settingsOpen = false
     state.fieldMenu = null
     render()
     requestAnimationFrame(() => {
       const el = qs('#createTitle')
-      if (el) { el.textContent = ''; el.focus() }
+      if (el) el.focus()
     })
     return
   }
@@ -163,6 +166,7 @@ function handleClick(e) {
   }
 
   if (action === 'toggle-create-more') {
+    syncCreateDraftFromDom()
     state.createMore = !state.createMore
     render()
     return
@@ -214,9 +218,21 @@ function handleClick(e) {
 }
 
 function handleInput(e) {
+  if (e.target.id === 'createTitle') {
+    state.newIssue.title = e.target.textContent
+    return
+  }
+  if (e.target.id === 'createBody') {
+    state.newIssue.body = e.target.value
+    return
+  }
+  if (e.target.id === 'nameInput') {
+    state.newIssue.nameInput = e.target.value
+    return
+  }
   if (e.target.id === 'searchInput') {
     state.searchQuery = e.target.value
-    render()
+    renderPage()
   }
 }
 

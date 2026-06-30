@@ -3,7 +3,7 @@ import { STATUSES, STATUS_LABELS, PRIORITIES, PRIORITY_LABELS, LABEL_COLORS, LAB
 import { ensureBody } from './data.js'
 import { statusToken, priorityBars, icon } from './icons.js'
 import { saveIssue } from './data.js'
-import { qs } from './utils.js'
+import { escapeAttr, escapeHtml, qs } from './utils.js'
 
 export function openFieldMenu(trigger, field, issueId, isNew = false) {
   const rect = trigger.getBoundingClientRect()
@@ -43,9 +43,9 @@ function currentValue(field, issueId, isNew) {
 
 function menuItem(field, value, label, visual, selected, issueId, isNew) {
   const cls = selected ? 'fm-item selected' : 'fm-item'
-  return `<button class="${cls}" data-action="select-field" data-field="${field}" data-value="${value}" data-id="${issueId || ''}" data-new="${isNew ? '1' : '0'}">
+  return `<button class="${cls}" data-action="select-field" data-field="${field}" data-value="${escapeAttr(value)}" data-id="${escapeAttr(issueId || '')}" data-new="${isNew ? '1' : '0'}">
     ${visual || ''}
-    <span class="fm-item-label">${label}</span>
+    <span class="fm-item-label">${escapeHtml(label)}</span>
     ${selected ? '<span class="fm-check">✓</span>' : ''}
   </button>`
 }
@@ -66,7 +66,7 @@ function assigneeMenuItems(current, issueId, isNew) {
   const items = []
   if (state.userName) {
     items.push(menuItem('assignee', state.userName, state.userName,
-      `<span class="avatar-sm">${state.userName.charAt(0).toUpperCase()}</span>`,
+      `<span class="avatar-sm">${escapeHtml(state.userName.charAt(0).toUpperCase())}</span>`,
       current === state.userName, issueId, isNew))
   }
   items.push(menuItem('assignee', '', 'Unassigned',
@@ -78,7 +78,7 @@ function assigneeMenuItems(current, issueId, isNew) {
 function projectMenuItems(current, issueId, isNew) {
   const known = new Set(state.issues.map(i => i.project).filter(Boolean))
   const items = []
-  items.push(`<input class="fm-input" id="fmProjectInput" type="text" placeholder="Type to add project..." autocomplete="off" data-field="project" data-id="${issueId || ''}" data-new="${isNew ? '1' : '0'}">`)
+  items.push(`<input class="fm-input" id="fmProjectInput" type="text" placeholder="Type to add project..." autocomplete="off" data-field="project" data-id="${escapeAttr(issueId || '')}" data-new="${isNew ? '1' : '0'}">`)
   items.push(menuItem('project', '', 'No project',
     '<span class="fm-icon-muted">–</span>', !current, issueId, isNew))
   for (const p of [...known].sort()) {
@@ -98,7 +98,7 @@ function labelMenuItems(currentLabels, issueId, isNew) {
     }
   }
   const items = []
-  items.push(`<input class="fm-input" id="fmLabelInput" type="text" placeholder="Type to add label..." autocomplete="off" data-field="labels" data-id="${issueId || ''}" data-new="${isNew ? '1' : '0'}">`)
+  items.push(`<input class="fm-input" id="fmLabelInput" type="text" placeholder="Type to add label..." autocomplete="off" data-field="labels" data-id="${escapeAttr(issueId || '')}" data-new="${isNew ? '1' : '0'}">`)
   items.push(menuItem('labels', '', 'No labels',
     '<span class="fm-icon-muted">–</span>', current.length === 0, issueId, isNew))
   for (const [name, color] of [...known].sort((a, b) => a[0].localeCompare(b[0]))) {
@@ -107,7 +107,7 @@ function labelMenuItems(currentLabels, issueId, isNew) {
     if (currentNames.has(name)) {
       const swatches = LABEL_COLORS.map(c => {
         const active = c === color ? ' active' : ''
-        return `<button class="fm-color-dot${active}" data-action="set-label-color" data-label="${name}" data-color="${c}" data-id="${issueId || ''}" data-new="${isNew ? '1' : '0'}"><span style="background:${LABEL_COLOR_VALUES[c]}"></span></button>`
+        return `<button class="fm-color-dot${active}" data-action="set-label-color" data-label="${escapeAttr(name)}" data-color="${c}" data-id="${escapeAttr(issueId || '')}" data-new="${isNew ? '1' : '0'}"><span style="background:${LABEL_COLOR_VALUES[c]}"></span></button>`
       }).join('')
       items.push(`<div class="fm-colors">${swatches}</div>`)
     }
@@ -135,7 +135,7 @@ function dueDateMenuItems(current, issueId, isNew) {
     items.push(menuItem('dueDate', val, label, icon('calendar', 12), val === current, issueId, isNew))
   }
   items.push('<div class="fm-sep"></div>')
-  items.push(`<input class="fm-date-input" id="fmDateInput" type="date" data-id="${issueId || ''}" data-new="${isNew ? '1' : '0'}"${current ? ` value="${current}"` : ''}>`)
+  items.push(`<input class="fm-date-input" id="fmDateInput" type="date" data-id="${escapeAttr(issueId || '')}" data-new="${isNew ? '1' : '0'}"${current ? ` value="${escapeAttr(current)}"` : ''}>`)
   return items.join('')
 }
 
@@ -222,7 +222,7 @@ export function handleFieldSelect(target) {
 
 function handleTextInput(input, field, issueId, isNew) {
   const value = input.value.trim()
-  if (!value) return
+  if (!value) return false
 
   if (field === 'project') {
     if (isNew === '1') {
@@ -233,11 +233,12 @@ function handleTextInput(input, field, issueId, isNew) {
     }
     state.fieldMenu = null
     render()
+    return true
   }
 
   if (field === 'labels') {
     const labelName = value.toLowerCase().replace(/[^a-z0-9-_ ]/g, '').trim()
-    if (!labelName) return
+    if (!labelName) return false
     if (isNew === '1') {
       const existing = state.newIssue.labels || []
       if (!existing.some(l => l.name === labelName)) {
@@ -255,7 +256,21 @@ function handleTextInput(input, field, issueId, isNew) {
     }
     input.value = ''
     render()
+    return true
   }
+  return false
+}
+
+export function commitFieldMenuTextInput({ close = false } = {}) {
+  const input = qs('.field-menu .fm-input')
+  const committed = input
+    ? handleTextInput(input, input.dataset.field, input.dataset.id, input.dataset.new)
+    : false
+  if (close && state.fieldMenu) {
+    state.fieldMenu = null
+    render()
+  }
+  return committed
 }
 
 function handleDateInput(input, issueId, isNew) {
@@ -331,5 +346,5 @@ export async function handleLabelColorChange(labelName, newColor, issueId, isNew
 
 export function fieldControl(issue, field, content, cls = '') {
   const isOpen = state.fieldMenu?.issueId === issue.id && state.fieldMenu?.field === field
-  return `<button class="field-ctrl ${cls}${isOpen ? ' open' : ''}" data-action="open-field" data-field="${field}" data-id="${issue.id}">${content}</button>`
+  return `<button class="field-ctrl ${cls}${isOpen ? ' open' : ''}" data-action="open-field" data-field="${field}" data-id="${escapeAttr(issue.id)}">${content}</button>`
 }
