@@ -62,6 +62,15 @@ describe('Knowledge UI contract', () => {
     expect(js).toContain("typeFilterEl.addEventListener('change'")
   })
 
+  it('loads list entries in small pages', () => {
+    const js = script()
+
+    expect(js).toContain('const LIST_PAGE_SIZE = 25')
+    expect(js).toContain("runtime.call('knowledge.list', { limit: LIST_PAGE_SIZE, offset })")
+    expect(js).toContain("typeof result?.nextOffset === 'number'")
+    expect(js).toContain('loaded.push(...items.map(normEntry))')
+  })
+
   it('preserves graph fields and extra metadata when saving through the detail view', () => {
     const js = script()
 

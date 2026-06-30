@@ -178,9 +178,44 @@ describe('knowledge package tools', () => {
 
     await expect(listKnowledge(ctx)).resolves.toEqual({
       folderPresent: true,
+      total: 2,
+      offset: 0,
+      limit: null,
+      nextOffset: null,
       items: [
         expect.objectContaining({ id: 'example-org', title: 'Example Org', type: 'note' }),
         expect.objectContaining({ id: 'example-project', title: 'Example Project', type: 'note' }),
+      ],
+    })
+    expect(ctx.calls.some(([name]) => name === 'fs.read')).toBe(false)
+  })
+
+  it('paginates list results to keep UI payloads small', async () => {
+    const ctx = createCtx({
+      'knowledge/a.md': '',
+      'knowledge/b.md': '',
+      'knowledge/c.md': '',
+    })
+
+    await expect(listKnowledge(ctx, { limit: 2 })).resolves.toMatchObject({
+      folderPresent: true,
+      total: 3,
+      offset: 0,
+      limit: 2,
+      nextOffset: 2,
+      items: [
+        expect.objectContaining({ id: 'a' }),
+        expect.objectContaining({ id: 'b' }),
+      ],
+    })
+    await expect(listKnowledge(ctx, { limit: 2, offset: 2 })).resolves.toMatchObject({
+      folderPresent: true,
+      total: 3,
+      offset: 2,
+      limit: 2,
+      nextOffset: null,
+      items: [
+        expect.objectContaining({ id: 'c' }),
       ],
     })
     expect(ctx.calls.some(([name]) => name === 'fs.read')).toBe(false)

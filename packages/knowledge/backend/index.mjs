@@ -344,18 +344,40 @@ async function listFullKnowledge(ctx) {
   return { items, folderPresent: true }
 }
 
-export async function listKnowledge(ctx) {
+export async function listKnowledge(ctx, input = {}) {
   const result = await listKnowledgeFiles(ctx)
   if (!result.folderPresent) return { items: [], folderPresent: false }
 
-  const ids = result.files.map(file => file.id)
+  const total = result.files.length
+  const limit = normalizeLimit(input.limit)
+  const offset = normalizeOffset(input.offset)
+  const files = limit === null ? result.files : result.files.slice(offset, offset + limit)
+  const ids = files.map(file => file.id)
   const indexed = await listKnowledgeIndex(ctx, ids)
   const byId = new Map((indexed.ok ? indexed.items : []).map(entry => [entry.id, entry]))
+  const nextOffset = limit === null || offset + limit >= total ? null : offset + limit
 
   return {
     folderPresent: true,
-    items: result.files.map(file => byId.get(file.id) || summaryFromFile(file)),
+    total,
+    offset,
+    limit,
+    nextOffset,
+    items: files.map(file => byId.get(file.id) || summaryFromFile(file)),
   }
+}
+
+function normalizeLimit(value) {
+  if (value === undefined || value === null || value === '') return null
+  const limit = Number(value)
+  if (!Number.isFinite(limit) || limit <= 0) return null
+  return Math.min(Math.floor(limit), 100)
+}
+
+function normalizeOffset(value) {
+  const offset = Number(value)
+  if (!Number.isFinite(offset) || offset <= 0) return 0
+  return Math.floor(offset)
 }
 
 export async function getKnowledge(ctx, input) {
@@ -592,8 +614,11 @@ export const tools = {
   list: {
     name: 'knowledge.list',
     label: 'List knowledge',
-    description: 'List knowledge entry summaries from knowledge/. Returns {items, folderPresent}; bodies are omitted.',
-    inputSchema: objectSchema({}),
+    description: 'List knowledge entry summaries from knowledge/. Returns {items, folderPresent, total, offset, limit, nextOffset}; bodies are omitted.',
+    inputSchema: objectSchema({
+      limit: { type: 'number', description: 'Optional page size, max 100.' },
+      offset: { type: 'number', description: 'Optional zero-based item offset.' },
+    }),
     audience: ['chat'],
     execute: listKnowledge,
   },

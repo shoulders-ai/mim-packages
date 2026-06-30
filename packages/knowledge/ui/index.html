@@ -951,10 +951,34 @@ function escapeAttr(s) {
 
 // ── Data access (core tools via runtime SDK) ──
 
+const LIST_PAGE_SIZE = 25
+
 async function loadEntries() {
-  const result = await runtime.call('knowledge.list', {})
-  folderPresent = result.folderPresent !== false
-  entries = (result.items || []).map(normEntry)
+  const loaded = []
+  let offset = 0
+  let sawResult = false
+
+  while (offset !== null) {
+    const result = await runtime.call('knowledge.list', { limit: LIST_PAGE_SIZE, offset })
+    sawResult = true
+    if (result && result.folderPresent === false) {
+      folderPresent = false
+      entries = []
+      return
+    }
+
+    const items = Array.isArray(result?.items) ? result.items : []
+    loaded.push(...items.map(normEntry))
+
+    if (typeof result?.nextOffset === 'number') {
+      offset = result.nextOffset
+    } else {
+      offset = null
+    }
+  }
+
+  folderPresent = sawResult
+  entries = loaded
 }
 
 async function saveEntry(entry) {
