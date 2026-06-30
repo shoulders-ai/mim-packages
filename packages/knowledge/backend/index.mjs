@@ -1,4 +1,10 @@
-import { rebuildKnowledgeIndex, searchKnowledgeIndex } from './indexer.mjs'
+import {
+  deleteKnowledgeIndex,
+  listKnowledgeIndex,
+  rebuildKnowledgeIndex,
+  searchKnowledgeIndex,
+  upsertKnowledgeIndex,
+} from './indexer.mjs'
 
 const KNOWLEDGE_DIR = 'knowledge'
 const KNOWLEDGE_ID_RE = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/
@@ -284,18 +290,53 @@ async function readKnowledgeFile(ctx, id) {
   return parseKnowledge(id, result.content)
 }
 
-async function listFullKnowledge(ctx) {
-  if (!await folderPresent(ctx)) return { items: [], folderPresent: false }
-  const result = await ctx.tools.call('fs.list', { path: KNOWLEDGE_DIR, max_entries: 1000 })
+async function listKnowledgeFiles(ctx) {
+  if (!await folderPresent(ctx)) return { files: [], folderPresent: false }
+  const result = await ctx.tools.call('fs.list', { path: KNOWLEDGE_DIR, max_entries: 5000 })
   const entries = Array.isArray(result?.entries) ? result.entries : []
+  return {
+    files: entries
+      .filter(entry => entry && entry.type === 'file' && typeof entry.path === 'string')
+      .filter(entry => entry.path.endsWith('.md'))
+      .map(entry => ({ ...entry, id: idFromKnowledgePath(entry.path) }))
+      .filter(entry => KNOWLEDGE_ID_RE.test(entry.id)),
+    folderPresent: true,
+  }
+}
+
+function idFromKnowledgePath(path) {
+  return String(path || '').split('/').pop().replace(/\.md$/, '')
+}
+
+function titleFromId(id) {
+  return String(id || '')
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function summaryFromFile(file) {
+  return {
+    id: file.id,
+    title: titleFromId(file.id),
+    type: 'note',
+    summary: '',
+    tags: [],
+    links: [],
+    extra: {},
+    created: typeof file.createdAt === 'string' ? file.createdAt : '',
+    updated: typeof file.modifiedAt === 'string' ? file.modifiedAt : '',
+  }
+}
+
+async function listFullKnowledge(ctx) {
+  const { files, folderPresent } = await listKnowledgeFiles(ctx)
+  if (!folderPresent) return { items: [], folderPresent: false }
   const items = []
-  for (const entry of entries) {
-    if (!entry || entry.type !== 'file' || typeof entry.path !== 'string') continue
-    if (!entry.path.endsWith('.md')) continue
-    const id = entry.path.split('/').pop().replace(/\.md$/, '')
-    if (!KNOWLEDGE_ID_RE.test(id)) continue
+  for (const entry of files) {
     try {
-      items.push(await readKnowledgeFile(ctx, id))
+      items.push(await readKnowledgeFile(ctx, entry.id))
     } catch {
       // Skip unreadable/corrupt files.
     }
@@ -304,13 +345,16 @@ async function listFullKnowledge(ctx) {
 }
 
 export async function listKnowledge(ctx) {
-  const result = await listFullKnowledge(ctx)
+  const result = await listKnowledgeFiles(ctx)
+  if (!result.folderPresent) return { items: [], folderPresent: false }
+
+  const ids = result.files.map(file => file.id)
+  const indexed = await listKnowledgeIndex(ctx, ids)
+  const byId = new Map((indexed.ok ? indexed.items : []).map(entry => [entry.id, entry]))
+
   return {
-    ...result,
-    items: result.items.map(({ body, ...summary }) => {
-      void body
-      return summary
-    }),
+    folderPresent: true,
+    items: result.files.map(file => byId.get(file.id) || summaryFromFile(file)),
   }
 }
 
@@ -361,7 +405,7 @@ export async function createKnowledge(ctx, input = {}) {
     if (exists?.exists === true) continue
     try {
       await ctx.tools.call('fs.create', { path, content: serializeKnowledge(entry) })
-      void refreshKnowledgeIndex(ctx)
+      void upsertKnowledgeIndex(ctx, entry)
       return entry
     } catch (err) {
       if (attempt < 100 && String(err?.message ?? err).includes('already exists')) continue
@@ -394,7 +438,7 @@ export async function updateKnowledge(ctx, input = {}) {
   validateTitle(merged)
   merged.updated = new Date().toISOString()
   await ctx.tools.call('fs.write', { path: `${KNOWLEDGE_DIR}/${id}.md`, content: serializeKnowledge(merged) })
-  void refreshKnowledgeIndex(ctx)
+  void upsertKnowledgeIndex(ctx, merged)
   return merged
 }
 
@@ -404,7 +448,7 @@ export async function deleteKnowledge(ctx, input = {}) {
   const path = `${KNOWLEDGE_DIR}/${id}.md`
   const exists = await ctx.tools.call('fs.exists', { path })
   if (exists?.exists === true) await ctx.tools.call('fs.delete', { path })
-  void refreshKnowledgeIndex(ctx)
+  void deleteKnowledgeIndex(ctx, id)
   return { ok: true }
 }
 
@@ -441,7 +485,6 @@ function compactEntry(entry) {
 
 export async function catalogKnowledge(ctx) {
   const { items } = await listKnowledge(ctx)
-  void refreshKnowledgeIndex(ctx)
   return {
     entries: items.map(compactEntry),
   }

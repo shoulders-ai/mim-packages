@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 
 const DB_RELATIVE_PATH = ['.mim', 'knowledge.sqlite']
 
@@ -27,12 +27,23 @@ async function workspacePath(ctx) {
   return info.path
 }
 
+async function databasePath(ctx) {
+  const root = await workspacePath(ctx)
+  return join(root, ...DB_RELATIVE_PATH)
+}
+
 async function openDatabase(ctx) {
   const { DatabaseSync } = await import('node:sqlite')
-  const root = await workspacePath(ctx)
-  const mimDir = join(root, '.mim')
-  mkdirSync(mimDir, { recursive: true })
-  return new DatabaseSync(join(root, ...DB_RELATIVE_PATH))
+  const path = await databasePath(ctx)
+  mkdirSync(dirname(path), { recursive: true })
+  return new DatabaseSync(path)
+}
+
+async function openExistingDatabase(ctx) {
+  const { DatabaseSync } = await import('node:sqlite')
+  const path = await databasePath(ctx)
+  if (!existsSync(path)) return null
+  return new DatabaseSync(path, { readOnly: true })
 }
 
 function createSchema(db) {
@@ -148,6 +159,140 @@ export async function rebuildKnowledgeIndex(ctx, entries = []) {
     return { ok: false, error: err?.message ? String(err.message) : String(err) }
   } finally {
     if (db) db.close()
+  }
+}
+
+export async function upsertKnowledgeIndex(ctx, entry) {
+  let db
+  try {
+    db = await openDatabase(ctx)
+    createSchema(db)
+    upsertEntry(db, entry)
+    return { ok: true, indexed: 1, path: DB_RELATIVE_PATH.join('/') }
+  } catch (err) {
+    return { ok: false, error: err?.message ? String(err.message) : String(err) }
+  } finally {
+    if (db) db.close()
+  }
+}
+
+export async function deleteKnowledgeIndex(ctx, id) {
+  let db
+  try {
+    db = await openDatabase(ctx)
+    createSchema(db)
+    deleteEntry(db, id)
+    return { ok: true, deleted: id, path: DB_RELATIVE_PATH.join('/') }
+  } catch (err) {
+    return { ok: false, error: err?.message ? String(err.message) : String(err) }
+  } finally {
+    if (db) db.close()
+  }
+}
+
+export async function listKnowledgeIndex(ctx, ids = []) {
+  if (!Array.isArray(ids) || ids.length === 0) return { ok: true, items: [] }
+
+  let db
+  try {
+    db = await openExistingDatabase(ctx)
+    if (!db) return { ok: false, error: 'knowledge index does not exist' }
+
+    const placeholders = ids.map(() => '?').join(', ')
+    const rows = db.prepare(`
+      SELECT id, type, title, summary, extra, created, updated
+      FROM nodes
+      WHERE id IN (${placeholders})
+    `).all(...ids)
+
+    const tags = db.prepare('SELECT label FROM labels WHERE node_id = ? ORDER BY label')
+    const links = db.prepare('SELECT rel, target FROM edges WHERE source = ? ORDER BY rel, target')
+    const byId = new Map(rows.map(row => [row.id, {
+      id: row.id,
+      type: row.type || 'note',
+      title: row.title || '',
+      summary: row.summary || '',
+      tags: tags.all(row.id).map(tag => tag.label),
+      links: links.all(row.id).map(link => ({ rel: link.rel, target: link.target })),
+      extra: parseExtra(row.extra),
+      created: row.created || '',
+      updated: row.updated || '',
+    }]))
+
+    return {
+      ok: true,
+      items: ids.map(id => byId.get(id)).filter(Boolean),
+    }
+  } catch (err) {
+    return { ok: false, error: err?.message ? String(err.message) : String(err) }
+  } finally {
+    if (db) db.close()
+  }
+}
+
+function upsertEntry(db, entry) {
+  const upsertNode = db.prepare(`
+    INSERT INTO nodes (id, type, title, summary, body, extra, created, updated, hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      type = excluded.type,
+      title = excluded.title,
+      summary = excluded.summary,
+      body = excluded.body,
+      extra = excluded.extra,
+      created = excluded.created,
+      updated = excluded.updated,
+      hash = excluded.hash
+  `)
+  const deleteLabels = db.prepare('DELETE FROM labels WHERE node_id = ?')
+  const deleteEdges = db.prepare('DELETE FROM edges WHERE source = ?')
+  const insertLabel = db.prepare('INSERT OR IGNORE INTO labels (node_id, label) VALUES (?, ?)')
+  const insertEdge = db.prepare('INSERT OR IGNORE INTO edges (source, target, rel) VALUES (?, ?, ?)')
+  const deleteSearch = db.prepare('DELETE FROM search WHERE id = ?')
+  const insertSearch = db.prepare('INSERT INTO search (id, title, summary, body) VALUES (?, ?, ?, ?)')
+
+  db.exec('BEGIN')
+  try {
+    upsertNode.run(
+      entry.id,
+      entry.type || 'note',
+      entry.title || '',
+      entry.summary || '',
+      entry.body || '',
+      JSON.stringify(entry.extra || {}),
+      entry.created || '',
+      entry.updated || '',
+      hashEntry(entry),
+    )
+    deleteLabels.run(entry.id)
+    deleteEdges.run(entry.id)
+    for (const tag of entry.tags || []) insertLabel.run(entry.id, String(tag))
+    for (const link of entry.links || []) insertEdge.run(entry.id, link.target, link.rel)
+    deleteSearch.run(entry.id)
+    insertSearch.run(entry.id, entry.title || '', entry.summary || '', entry.body || '')
+    db.exec('COMMIT')
+  } catch (err) {
+    db.exec('ROLLBACK')
+    throw err
+  }
+}
+
+function deleteEntry(db, id) {
+  const deleteLabels = db.prepare('DELETE FROM labels WHERE node_id = ?')
+  const deleteEdges = db.prepare('DELETE FROM edges WHERE source = ?')
+  const deleteNode = db.prepare('DELETE FROM nodes WHERE id = ?')
+  const deleteSearch = db.prepare('DELETE FROM search WHERE id = ?')
+
+  db.exec('BEGIN')
+  try {
+    deleteLabels.run(id)
+    deleteEdges.run(id)
+    deleteSearch.run(id)
+    deleteNode.run(id)
+    db.exec('COMMIT')
+  } catch (err) {
+    db.exec('ROLLBACK')
+    throw err
   }
 }
 

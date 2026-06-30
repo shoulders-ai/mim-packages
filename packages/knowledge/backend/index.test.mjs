@@ -170,6 +170,22 @@ describe('knowledge package tools', () => {
     await expect(createKnowledge(ctx, { title: 'X' })).resolves.toEqual({ folderPresent: false })
   })
 
+  it('list uses filename fallbacks without reading every markdown file', async () => {
+    const ctx = createCtx({
+      'knowledge/example-org.md': '---\ntitle: Example Org\n---\nBody',
+      'knowledge/example-project.md': '---\ntitle: Example Project\n---\nBody',
+    })
+
+    await expect(listKnowledge(ctx)).resolves.toEqual({
+      folderPresent: true,
+      items: [
+        expect.objectContaining({ id: 'example-org', title: 'Example Org', type: 'note' }),
+        expect.objectContaining({ id: 'example-project', title: 'Example Project', type: 'note' }),
+      ],
+    })
+    expect(ctx.calls.some(([name]) => name === 'fs.read')).toBe(false)
+  })
+
   it('create/get/list/update/delete round-trips through fs.* tools', async () => {
     const ctx = createCtx({ 'knowledge/.keep': '' })
     const created = await createKnowledge(ctx, {
@@ -269,7 +285,7 @@ describe('knowledge package tools', () => {
   })
 
   it('catalog and neighbors expose graph retrieval without bodies', async () => {
-    const org = serializeKnowledge({
+    const org = {
       id: 'example-org',
       title: 'Example Org',
       type: 'org',
@@ -280,8 +296,8 @@ describe('knowledge package tools', () => {
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
       body: 'Body should not leak into catalog.',
-    })
-    const project = serializeKnowledge({
+    }
+    const project = {
       id: 'example-project',
       title: 'Example Project',
       type: 'project',
@@ -292,34 +308,41 @@ describe('knowledge package tools', () => {
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
       body: '',
-    })
-    const ctx = createCtx({
-      'knowledge/example-org.md': org,
-      'knowledge/example-project.md': project,
-    })
+    }
+    const workspacePath = mkdtempSync(join(tmpdir(), 'mim-knowledge-'))
+    try {
+      const ctx = createCtx({
+        'knowledge/example-org.md': serializeKnowledge(org),
+        'knowledge/example-project.md': serializeKnowledge(project),
+      }, { workspacePath })
+      await rebuildKnowledgeIndex(ctx, [org, project])
 
-    await expect(catalogKnowledge(ctx)).resolves.toEqual({
-      entries: expect.arrayContaining([
-        expect.objectContaining({ id: 'example-org', type: 'org', title: 'Example Org', summary: 'Example organization.' }),
-      ]),
-    })
-    const catalog = await catalogKnowledge(ctx)
-    expect(catalog.entries[0]).not.toHaveProperty('body')
+      await expect(catalogKnowledge(ctx)).resolves.toEqual({
+        entries: expect.arrayContaining([
+          expect.objectContaining({ id: 'example-org', type: 'org', title: 'Example Org', summary: 'Example organization.' }),
+        ]),
+      })
+      const catalog = await catalogKnowledge(ctx)
+      expect(catalog.entries[0]).not.toHaveProperty('body')
+      expect(ctx.calls.some(([name]) => name === 'fs.read')).toBe(false)
 
-    const neighbors = await neighborsKnowledge(ctx, { id: 'example-org' })
-    expect(neighbors.incoming).toEqual([
-      expect.objectContaining({ rel: 'engagement_for', id: 'example-project', type: 'project' }),
-    ])
+      const neighbors = await neighborsKnowledge(ctx, { id: 'example-org' })
+      expect(neighbors.incoming).toEqual([
+        expect.objectContaining({ rel: 'engagement_for', id: 'example-project', type: 'project' }),
+      ])
 
-    const graph = await graphKnowledge(ctx)
-    expect(graph.nodes).toHaveLength(2)
-    expect(graph.edges).toEqual([
-      { source: 'example-project', target: 'example-org', rel: 'engagement_for', missing: false },
-    ])
+      const graph = await graphKnowledge(ctx)
+      expect(graph.nodes).toHaveLength(2)
+      expect(graph.edges).toEqual([
+        { source: 'example-project', target: 'example-org', rel: 'engagement_for', missing: false },
+      ])
+    } finally {
+      rmSync(workspacePath, { recursive: true, force: true })
+    }
   })
 
   it('agentContext includes typed catalog details but redacts sensitive summaries', async () => {
-    const entry = serializeKnowledge({
+    const entry = {
       id: 'deploy-notes',
       title: 'Deploy notes',
       type: 'note',
@@ -330,8 +353,8 @@ describe('knowledge package tools', () => {
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
       body: '',
-    })
-    const sensitive = serializeKnowledge({
+    }
+    const sensitive = {
       id: 'example-sensitive-record',
       title: 'Example Sensitive Record',
       type: 'record',
@@ -342,17 +365,25 @@ describe('knowledge package tools', () => {
       created: '2026-06-01T00:00:00.000Z',
       updated: '2026-06-01T00:00:00.000Z',
       body: 'SECRET',
-    })
-    const ctx = createCtx({
-      'knowledge/deploy-notes.md': entry,
-      'knowledge/example-sensitive-record.md': sensitive,
-    })
-    const section = await knowledgeAgentContext(ctx)
-    expect(section.title).toBe('Knowledge')
-    expect(section.body).toContain('2 entries.')
-    expect(section.body).toContain('- deploy-notes [note]: Deploy notes — How production deploys work. [ops]')
-    expect(section.body).toContain('- example-sensitive-record [record]: Example Sensitive Record — [sensitive record; read explicitly if needed] [banking]')
-    expect(section.body).not.toContain('SECRET')
+    }
+    const workspacePath = mkdtempSync(join(tmpdir(), 'mim-knowledge-'))
+    try {
+      const ctx = createCtx({
+        'knowledge/deploy-notes.md': serializeKnowledge(entry),
+        'knowledge/example-sensitive-record.md': serializeKnowledge(sensitive),
+      }, { workspacePath })
+      await rebuildKnowledgeIndex(ctx, [entry, sensitive])
+
+      const section = await knowledgeAgentContext(ctx)
+      expect(section.title).toBe('Knowledge')
+      expect(section.body).toContain('2 entries.')
+      expect(section.body).toContain('- deploy-notes [note]: Deploy notes — How production deploys work. [ops]')
+      expect(section.body).toContain('- example-sensitive-record [record]: Example Sensitive Record — [sensitive record; read explicitly if needed] [banking]')
+      expect(section.body).not.toContain('SECRET')
+      expect(ctx.calls.some(([name]) => name === 'fs.read')).toBe(false)
+    } finally {
+      rmSync(workspacePath, { recursive: true, force: true })
+    }
   })
 
   it('search falls back to markdown entries and omits bodies', async () => {
