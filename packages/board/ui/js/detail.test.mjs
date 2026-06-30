@@ -1,0 +1,81 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { makeNewIssueDraft } from './createDraft.js'
+import { state } from './state.js'
+
+vi.mock('./data.js', () => ({
+  deleteIssue: vi.fn(),
+  ensureBody: vi.fn(async issue => issue.body || ''),
+  saveIssue: vi.fn(),
+}))
+
+const { renderDetail, syncDetailDraftFromDom } = await import('./detail.js')
+
+describe('Board detail view draft contracts', () => {
+  beforeEach(() => {
+    state.issues = [{
+      ...makeNewIssueDraft(),
+      id: 'issue-1700000000-ab12',
+      title: '<button data-action="new-issue">bad</button>',
+      body: '</textarea><button data-action="new-issue">bad</button>',
+      status: 'backlog',
+      priority: 'normal',
+      labels: [{ name: '<b>bug</b>', color: 'red' }],
+      tags: ['<b>bug</b>'],
+      project: '<img src=x>',
+      assignee: '<script>',
+      dueDate: '',
+      created: '2026-01-01T00:00:00.000Z',
+      updated: '',
+    }]
+    state.detailIssueId = 'issue-1700000000-ab12'
+    state.page = 'detail'
+  })
+
+  afterEach(() => {
+    delete globalThis.document
+  })
+
+  it('escapes issue text instead of rendering it as controls', () => {
+    const html = renderDetail()
+
+    expect(html).toContain('&lt;button data-action=&quot;new-issue&quot;&gt;bad&lt;/button&gt;')
+    expect(html).toContain('&lt;/textarea&gt;&lt;button data-action=&quot;new-issue&quot;&gt;bad&lt;/button&gt;')
+    expect(html).toContain('&lt;b&gt;bug&lt;/b&gt;')
+    expect(html).not.toContain('<button data-action="new-issue">bad</button>')
+  })
+
+  it('syncs detail input values into issue state before rerenders', () => {
+    const title = { value: 'Updated title' }
+    const body = { value: 'Updated body' }
+    globalThis.document = {
+      querySelector(selector) {
+        if (selector === '#detailTitle') return title
+        if (selector === '#detailBody') return body
+        return null
+      },
+    }
+
+    syncDetailDraftFromDom()
+
+    expect(state.issues[0].title).toBe('Updated title')
+    expect(state.issues[0].body).toBe('Updated body')
+  })
+
+  it('does not turn an unloaded blank body into a user edit', () => {
+    delete state.issues[0].body
+    const title = { value: 'Updated title' }
+    const body = { value: '' }
+    globalThis.document = {
+      querySelector(selector) {
+        if (selector === '#detailTitle') return title
+        if (selector === '#detailBody') return body
+        return null
+      },
+    }
+
+    syncDetailDraftFromDom()
+
+    expect(state.issues[0].title).toBe('Updated title')
+    expect(state.issues[0].body).toBeUndefined()
+  })
+})
