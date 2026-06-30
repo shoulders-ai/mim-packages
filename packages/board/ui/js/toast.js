@@ -1,10 +1,10 @@
 import { state } from './state.js'
-import { qs } from './utils.js'
+import { escapeHtml, qs } from './utils.js'
 
 export function renderToast() {
   const container = qs('#toastLayer')
   if (!container) return
   container.innerHTML = state.toast
-    ? `<div class="toast">${state.toast}</div>`
+    ? `<div class="toast">${escapeHtml(state.toast)}</div>`
     : ''
 }

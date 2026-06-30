@@ -55,3 +55,14 @@ export function userInitial(name) {
   if (!name) return '?'
   return name.charAt(0).toUpperCase()
 }
+
+export function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+export const escapeAttr = escapeHtml

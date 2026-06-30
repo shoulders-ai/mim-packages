@@ -2,7 +2,7 @@ import { state } from './state.js'
 import { LIST_GROUP_ORDER, STATUS_LABELS, PRIORITY_WEIGHT, LABEL_COLOR_VALUES } from './constants.js'
 import { statusToken, priorityBars, icon } from './icons.js'
 import { fieldControl } from './fields.js'
-import { formatShortDate, isOverdue, userInitial } from './utils.js'
+import { escapeAttr, escapeHtml, formatShortDate, isOverdue, userInitial } from './utils.js'
 
 function applyFilters(issues) {
   const q = state.searchQuery.toLowerCase()
@@ -45,23 +45,23 @@ function applySorting(result) {
 
 function labelPillCompact(label) {
   const color = LABEL_COLOR_VALUES[label.color] || LABEL_COLOR_VALUES.gray
-  return `<span class="label-pill compact"><span class="label-dot" style="background:${color}"></span>${label.name}</span>`
+  return `<span class="label-pill compact"><span class="label-dot" style="background:${color}"></span>${escapeHtml(label.name)}</span>`
 }
 
 function listRow(issue) {
   const labelsHTML = (issue.labels || []).slice(0, 2).map(labelPillCompact).join('')
   const dueHTML = issue.dueDate
-    ? `<span class="date-chip-inline${isOverdue(issue.dueDate) ? ' overdue' : ''}">${icon('calendar', 11)} ${formatShortDate(issue.dueDate)}</span>`
+    ? `<span class="date-chip-inline${isOverdue(issue.dueDate) ? ' overdue' : ''}">${icon('calendar', 11)} ${escapeHtml(formatShortDate(issue.dueDate))}</span>`
     : ''
   const assigneeHTML = issue.assignee
-    ? `<span class="avatar-sm">${userInitial(issue.assignee)}</span>`
+    ? `<span class="avatar-sm">${escapeHtml(userInitial(issue.assignee))}</span>`
     : '<span></span>'
 
-  return `<div class="list-row" data-action="open-detail" data-id="${issue.id}">
+  return `<div class="list-row" data-action="open-detail" data-id="${escapeAttr(issue.id)}">
     <span class="list-priority">${fieldControl(issue, 'priority', priorityBars(issue.priority), '')}</span>
     <span class="list-id">${issue.id.replace('issue-', '').slice(-8)}</span>
     <span class="list-status">${fieldControl(issue, 'status', statusToken(issue.status), '')}</span>
-    <span class="list-title">${issue.title || '(untitled)'}</span>
+    <span class="list-title">${escapeHtml(issue.title || '(untitled)')}</span>
     <span class="list-props">${labelsHTML}${dueHTML}</span>
     <span class="list-assignee">${assigneeHTML}</span>
     <span class="list-date">${formatShortDate(issue.created)}</span>
@@ -91,9 +91,9 @@ function projectGroupHTML(project) {
   return `<div class="list-group">
     <div class="list-group-head">
       ${icon('folder', 12)}
-      <span>${label}</span>
+      <span>${escapeHtml(label)}</span>
       <span class="list-group-count">${entries.length}</span>
-      <button class="col-add-btn" data-action="new-issue" data-project="${project}">+</button>
+      <button class="col-add-btn" data-action="new-issue" data-project="${escapeAttr(project)}">+</button>
     </div>
     ${entries.map(listRow).join('')}
   </div>`

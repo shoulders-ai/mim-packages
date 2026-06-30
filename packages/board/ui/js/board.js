@@ -4,7 +4,7 @@ import { LABEL_COLOR_VALUES } from './constants.js'
 import { statusToken, priorityBars, icon } from './icons.js'
 import { fieldControl } from './fields.js'
 import { saveIssue, ensureBody } from './data.js'
-import { formatShortDate, isOverdue, userInitial, qs } from './utils.js'
+import { escapeAttr, escapeHtml, formatShortDate, isOverdue, userInitial, qs } from './utils.js'
 
 function applyFilters(issues) {
   const q = state.searchQuery.toLowerCase()
@@ -48,16 +48,16 @@ function applySorting(result) {
 function labelPill(label, issueId) {
   const color = LABEL_COLOR_VALUES[label.color] || LABEL_COLOR_VALUES.gray
   if (issueId) {
-    return `<button class="label-pill field-ctrl" data-action="open-field" data-field="labels" data-id="${issueId}"><span class="label-dot" style="background:${color}"></span>${label.name}</button>`
+    return `<button class="label-pill field-ctrl" data-action="open-field" data-field="labels" data-id="${escapeAttr(issueId)}"><span class="label-dot" style="background:${color}"></span>${escapeHtml(label.name)}</button>`
   }
-  return `<span class="label-pill"><span class="label-dot" style="background:${color}"></span>${label.name}</span>`
+  return `<span class="label-pill"><span class="label-dot" style="background:${color}"></span>${escapeHtml(label.name)}</span>`
 }
 
 function dateChip(issue) {
   if (!issue.dueDate) return ''
   const overdue = isOverdue(issue.dueDate)
   const cls = overdue ? 'date-chip overdue' : 'date-chip'
-  return `<button class="${cls} field-ctrl" data-action="open-field" data-field="dueDate" data-id="${issue.id}">${icon('calendar', 11)}<span>${formatShortDate(issue.dueDate)}</span></button>`
+  return `<button class="${cls} field-ctrl" data-action="open-field" data-field="dueDate" data-id="${escapeAttr(issue.id)}">${icon('calendar', 11)}<span>${escapeHtml(formatShortDate(issue.dueDate))}</span></button>`
 }
 
 function issueCard(issue) {
@@ -68,7 +68,7 @@ function issueCard(issue) {
   if (isDragging) cls += ' dragging'
 
   const assigneeHTML = state.displayProps.has('assignee') && issue.assignee
-    ? fieldControl(issue, 'assignee', `<span class="avatar-sm">${userInitial(issue.assignee)}</span>`, 'card-assignee')
+    ? fieldControl(issue, 'assignee', `<span class="avatar-sm">${escapeHtml(userInitial(issue.assignee))}</span>`, 'card-assignee')
     : ''
 
   const metaParts = []
@@ -82,18 +82,18 @@ function issueCard(issue) {
     metaParts.push(dateChip(issue))
   }
   if (state.displayProps.has('project') && issue.project) {
-    metaParts.push(`<span class="card-project">${icon('folder', 10)} ${issue.project}</span>`)
+    metaParts.push(`<span class="card-project">${icon('folder', 10)} ${escapeHtml(issue.project)}</span>`)
   }
 
   const createdHTML = state.displayProps.has('created')
     ? `<div class="card-created">Created ${formatShortDate(issue.created)}</div>`
     : ''
 
-  return `<article class="${cls}" draggable="true" data-action="open-detail" data-id="${issue.id}">
+  return `<article class="${cls}" draggable="true" data-action="open-detail" data-id="${escapeAttr(issue.id)}">
     ${assigneeHTML}
     <div class="card-title-row">
       ${fieldControl(issue, 'status', statusToken(issue.status), 'card-status')}
-      <span class="card-title">${issue.title || '(untitled)'}</span>
+      <span class="card-title">${escapeHtml(issue.title || '(untitled)')}</span>
     </div>
     <div class="card-meta">${metaParts.join('')}</div>
     ${createdHTML}
@@ -137,20 +137,20 @@ function projectColumnHTML(project) {
     state.issues.filter(i => (i.project || '') === project)
   )
 
-  return `<section class="column" data-project="${project}">
+  return `<section class="column" data-project="${escapeAttr(project)}">
     <div class="col-header">
       ${icon('folder', 12)}
-      <span class="col-label">${label}</span>
+      <span class="col-label">${escapeHtml(label)}</span>
       <span class="col-count">${entries.length}</span>
       <span class="col-spacer"></span>
-      <button class="col-add-btn" data-action="new-issue" data-project="${project}" title="New issue">+</button>
+      <button class="col-add-btn" data-action="new-issue" data-project="${escapeAttr(project)}" title="New issue">+</button>
     </div>
-    <div class="col-cards" data-drop-project="${project}">
+    <div class="col-cards" data-drop-project="${escapeAttr(project)}">
       ${entries.length === 0
         ? '<div class="col-empty">No issues</div>'
         : entries.map(i => issueCard(i)).join('')
       }
-      <button class="card-add" data-action="new-issue" data-project="${project}">+</button>
+      <button class="card-add" data-action="new-issue" data-project="${escapeAttr(project)}">+</button>
     </div>
   </section>`
 }

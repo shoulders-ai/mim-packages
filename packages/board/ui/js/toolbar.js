@@ -1,6 +1,6 @@
 import { state, render } from './state.js'
 import { icon } from './icons.js'
-import { qs } from './utils.js'
+import { escapeAttr, escapeHtml, qs } from './utils.js'
 
 function viewToggle() {
   const board = state.view === 'board'
@@ -41,7 +41,7 @@ function projectFilter() {
   const current = state.projectFilter
   return `<select class="sort-select" data-select="project-filter">
     <option value=""${!current ? ' selected' : ''}>All projects</option>
-    ${sorted.map(p => `<option value="${p}"${current === p ? ' selected' : ''}>${p}</option>`).join('')}
+    ${sorted.map(p => `<option value="${escapeAttr(p)}"${current === p ? ' selected' : ''}>${escapeHtml(p)}</option>`).join('')}
   </select>`
 }
 
@@ -70,7 +70,7 @@ export function renderToolbar() {
         <div class="header-left">
           <button class="header-back-label" data-action="go-back" title="Back to board">${icon('arrow-left', 12)} Board</button>
           <span class="header-crumb-sep">›</span>
-          <span class="header-crumb-current">${title}</span>
+          <span class="header-crumb-current">${escapeHtml(title)}</span>
         </div>
         <div class="header-right">
           <button class="header-btn" data-action="go-back" title="Close">${icon('close', 13)}</button>
@@ -79,7 +79,7 @@ export function renderToolbar() {
     return
   }
 
-  const searchVal = state.searchQuery ? ` value="${state.searchQuery.replace(/"/g, '&quot;')}"` : ''
+  const searchVal = state.searchQuery ? ` value="${escapeAttr(state.searchQuery)}"` : ''
 
   container.innerHTML = `
     <div class="header-bar">
