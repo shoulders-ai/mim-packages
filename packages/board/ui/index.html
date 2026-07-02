@@ -560,7 +560,7 @@
 
     /* ── Field Menu ── */
     .field-menu {
-      position: absolute;
+      position: fixed;
       z-index: 95;
       width: 220px;
       padding: 5px;
@@ -900,6 +900,8 @@
       border-radius: 4px;
     }
     .detail-delete:hover { background: rgba(192,60,60,.08); }
+    .detail-delete.confirming { background: rgba(192,60,60,.08); }
+    .detail-delete.confirming:hover { background: rgba(192,60,60,.15); }
 
     /* ── Create Modal ── */
     .overlay {
@@ -983,7 +985,7 @@
       color: var(--color-ink-4);
     }
     .create-desc {
-      color: var(--color-ink-4);
+      color: var(--color-ink);
       width: 100%;
       min-height: 38px;
       padding: 0;
@@ -996,7 +998,6 @@
       line-height: 1.35;
       margin-bottom: 14px;
     }
-    .create-desc:not(:placeholder-shown) { color: var(--color-ink-2); }
     .create-desc::placeholder { color: var(--color-ink-4); }
     .create-chips {
       display: flex;

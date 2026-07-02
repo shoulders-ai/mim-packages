@@ -7,11 +7,9 @@ import { escapeAttr, escapeHtml, qs } from './utils.js'
 
 export function openFieldMenu(trigger, field, issueId, isNew = false) {
   const rect = trigger.getBoundingClientRect()
-  const main = qs('#app') || document.body
-  const mainRect = main.getBoundingClientRect()
   const width = 220
-  const x = Math.max(8, Math.min(rect.left - mainRect.left, mainRect.width - width - 8))
-  const y = Math.max(8, Math.min(rect.bottom - mainRect.top + 4, mainRect.height - 300))
+  const x = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
+  const y = Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - 300))
   state.fieldMenu = { field, issueId, isNew, x, y }
   render()
 }

@@ -67,6 +67,11 @@ export async function handleCreateIssue() {
 export function initCreateListeners() {
   document.addEventListener('keydown', (e) => {
     if (!state.modalOpen) return
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleCreateIssue()
+      return
+    }
     const active = document.activeElement
     if (e.key === 'Enter' && active?.id === 'createTitle') {
       e.preventDefault()

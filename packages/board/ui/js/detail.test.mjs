@@ -8,7 +8,7 @@ vi.mock('./data.js', () => ({
   saveIssue: vi.fn(),
 }))
 
-const { renderDetail, syncDetailDraftFromDom } = await import('./detail.js')
+const { renderDetail, syncDetailDraftFromDom, handleDeleteIssue } = await import('./detail.js')
 
 describe('Board detail view draft contracts', () => {
   beforeEach(() => {
@@ -59,6 +59,25 @@ describe('Board detail view draft contracts', () => {
 
     expect(state.issues[0].title).toBe('Updated title')
     expect(state.issues[0].body).toBe('Updated body')
+  })
+
+  it('delete requires two clicks to confirm', async () => {
+    const id = state.issues[0].id
+    state.deleteConfirmId = null
+
+    await handleDeleteIssue(id)
+    expect(state.deleteConfirmId).toBe(id)
+    expect(state.page).toBe('detail')
+
+    const html = renderDetail()
+    expect(html).toContain('Confirm delete')
+
+    globalThis.document = {
+      querySelector() { return null },
+    }
+    await handleDeleteIssue(id)
+    expect(state.deleteConfirmId).toBeNull()
+    expect(state.page).toBe('project')
   })
 
   it('does not turn an unloaded blank body into a user edit', () => {

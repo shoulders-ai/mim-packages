@@ -24,6 +24,7 @@ export const state = {
   hiddenStatuses: new Set(),
 
   dragId: null,
+  deleteConfirmId: null,
 
   newIssue: makeNewIssueDraft(),
   createMore: false,

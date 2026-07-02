@@ -135,8 +135,8 @@ export function renderDetail() {
           <span>Created ${escapeHtml(formatDate(issue.created))}</span>
           ${issue.updated ? `<span>Updated ${escapeHtml(formatDate(issue.updated))}</span>` : ''}
         </div>
-        <button class="detail-delete" data-action="delete-issue" data-id="${escapeAttr(issue.id)}">
-          ${icon('trash', 13)} Delete issue
+        <button class="detail-delete${state.deleteConfirmId === issue.id ? ' confirming' : ''}" data-action="delete-issue" data-id="${escapeAttr(issue.id)}">
+          ${icon('trash', 13)} ${state.deleteConfirmId === issue.id ? 'Confirm delete' : 'Delete issue'}
         </button>
       </div>
     </aside>
@@ -163,6 +163,12 @@ export function initDetailListeners() {
 }
 
 export async function handleDeleteIssue(id) {
+  if (state.deleteConfirmId !== id) {
+    state.deleteConfirmId = id
+    render()
+    return
+  }
+  state.deleteConfirmId = null
   flushDetailSave()
   state.detailIssueId = null
   state.page = 'project'

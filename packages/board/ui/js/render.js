@@ -63,11 +63,18 @@ function handleClick(e) {
       state.settingsOpen = false
       changed = true
     }
+    if (state.deleteConfirmId) {
+      state.deleteConfirmId = null
+      changed = true
+    }
     if (changed) render()
     return
   }
 
   const action = target.dataset.action
+  if (state.deleteConfirmId && action !== 'delete-issue') {
+    state.deleteConfirmId = null
+  }
   if (state.fieldMenu && !e.target.closest('.field-menu')) {
     commitFieldMenuTextInput({ close: true })
   }
